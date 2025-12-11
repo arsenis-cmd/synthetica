@@ -23,7 +23,11 @@ class QualityScorer:
             api_key: Optional Anthropic API key for AI-powered scoring
             model: Claude model to use for AI scoring
         """
-        self.client = Anthropic(api_key=api_key) if api_key else None
+        self.client = Anthropic(
+            api_key=api_key,
+            timeout=60.0,
+            max_retries=3
+        ) if api_key else None
         self.model = model
 
     def score(self, conversation: Conversation, use_ai: bool = True) -> QualityScore:

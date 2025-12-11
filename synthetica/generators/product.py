@@ -20,7 +20,11 @@ class ProductGenerator:
             api_key: Anthropic API key
             model: Claude model to use
         """
-        self.client = Anthropic(api_key=api_key)
+        self.client = Anthropic(
+            api_key=api_key,
+            timeout=60.0,
+            max_retries=3
+        )
         self.model = model
 
     def generate_product(

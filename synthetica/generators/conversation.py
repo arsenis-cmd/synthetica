@@ -38,7 +38,11 @@ class ConversationGenerator:
             model: Claude model to use for generation
             diversity_engine: Optional diversity engine for persona and style variation
         """
-        self.client = Anthropic(api_key=api_key)
+        self.client = Anthropic(
+            api_key=api_key,
+            timeout=60.0,  # Increase timeout to 60 seconds for Railway
+            max_retries=3
+        )
         self.model = model
         self.diversity_engine = diversity_engine
 
