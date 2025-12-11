@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - Synthetica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-darker: #0a0a0f;
+            --bg-dark: #12121a;
+            --bg-medium: #1a1a27;
+            --text-primary: #f0f0f3;
+            --text-secondary: #a0a0ab;
+            --text-muted: #6b6b76;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            background: rgba(18, 18, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--accent-primary);
+        }
+
+        /* Main Layout */
+        .docs-layout {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 3rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+        }
+
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-title {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-links {
+            list-style: none;
+        }
+
+        .sidebar-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+            display: block;
+            padding: 0.25rem 0;
+        }
+
+        .sidebar-links a:hover {
+            color: var(--accent-primary);
+        }
+
+        /* Content */
+        .content {
+            max-width: 900px;
+        }
+
+        .page-header {
+            margin-bottom: 3rem;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 4rem;
+            scroll-margin-top: 100px;
+        }
+
+        .section h2 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section h3 {
+            font-size: 1.25rem;
+            margin: 2rem 0 1rem 0;
+            color: var(--text-primary);
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--bg-medium);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .code-block code {
+            color: #e0e0e5;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-lang {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: var(--bg-medium);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        th {
+            text-align: left;
+            padding: 1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .badge-get {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .badge-post {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-primary);
+        }
+
+        .badge-required {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .badge-optional {
+            background: rgba(160, 160, 171, 0.1);
+            color: var(--text-muted);
+        }
+
+        /* Alert Boxes */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--accent-primary);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+        }
+
+        /* Response Example */
+        .response-example {
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 1024px) {
+            .docs-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+                border-bottom: 1px solid var(--border);
+                padding-bottom: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">⚡ Synthetica</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/generate">Generate</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/docs" class="active">Docs</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="docs-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Getting Started</h3>
+                <ul class="sidebar-links">
+                    <li><a href="#introduction">Introduction</a></li>
+                    <li><a href="#authentication">Authentication</a></li>
+                    <li><a href="#rate-limits">Rate Limits</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">API Reference</h3>
+                <ul class="sidebar-links">
+                    <li><a href="#create-user">Create User</a></li>
+                    <li><a href="#get-usage">Get Usage</a></li>
+                    <li><a href="#generate">Generate Conversations</a></li>
+                    <li><a href="#checkout">Create Checkout</a></li>
+                    <li><a href="#datasets">List Datasets</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Code Examples</h3>
+                <ul class="sidebar-links">
+                    <li><a href="#python-example">Python</a></li>
+                    <li><a href="#nodejs-example">Node.js</a></li>
+                    <li><a href="#curl-example">cURL</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Content -->
+        <main class="content">
+            <div class="page-header">
+                <h1>API Documentation</h1>
+                <p>Build powerful synthetic data pipelines with the Synthetica API</p>
+            </div>
+
+            <!-- Introduction -->
+            <section id="introduction" class="section">
+                <h2>Introduction</h2>
+                <p>
+                    The Synthetica API allows you to programmatically generate high-quality synthetic customer support
+                    conversations for training AI models. All responses are returned in JSON format.
+                </p>
+                <div class="alert alert-info">
+                    <strong>Base URL:</strong> <code>http://localhost:8000</code>
+                </div>
+            </section>
+
+            <!-- Authentication -->
+            <section id="authentication" class="section">
+                <h2>Authentication</h2>
+                <p>
+                    All API requests require an API key to be included in the request header. You can obtain a free API key
+                    by creating an account on the <a href="/pricing" style="color: var(--accent-primary);">pricing page</a>.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">HTTP Header</span>
+                    </div>
+                    <pre><code>X-API-Key: your-api-key-here</code></pre>
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>Security Note:</strong> Never share your API key publicly or commit it to version control.
+                    Store it securely as an environment variable.
+                </div>
+            </section>
+
+            <!-- Rate Limits -->
+            <section id="rate-limits" class="section">
+                <h2>Rate Limits</h2>
+                <p>
+                    Rate limits are enforced based on your subscription tier. Each API call counts towards your monthly limit.
+                </p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tier</th>
+                            <th>Monthly Limit</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Free</strong></td>
+                            <td>100 conversations</td>
+                            <td>$0</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Starter</strong></td>
+                            <td>1,000 conversations</td>
+                            <td>$9</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Growth</strong></td>
+                            <td>10,000 conversations</td>
+                            <td>$49</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Create User -->
+            <section id="create-user" class="section">
+                <h2>Create User</h2>
+                <p>Create a new user account and receive an API key.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Endpoint</span>
+                    </div>
+                    <pre><code><span class="badge badge-post">POST</span> /api/users</code></pre>
+                </div>
+
+                <h3>Request Body</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>email</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-optional">Optional</span></td>
+                            <td>Email address for the account</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Response</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">JSON</span>
+                    </div>
+                    <pre><code>{
+  "api_key": "sk-synth-abc123...",
+  "subscription_tier": "free",
+  "usage_limit": 100
+}</code></pre>
+                </div>
+            </section>
+
+            <!-- Get Usage -->
+            <section id="get-usage" class="section">
+                <h2>Get Usage</h2>
+                <p>Retrieve current usage statistics for your API key.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Endpoint</span>
+                    </div>
+                    <pre><code><span class="badge badge-get">GET</span> /api/usage</code></pre>
+                </div>
+
+                <h3>Headers</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Header</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>X-API-Key</code></td>
+                            <td>Your API key</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Response</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">JSON</span>
+                    </div>
+                    <pre><code>{
+  "tier": "free",
+  "usage": 23,
+  "limit": 100,
+  "remaining": 77,
+  "percentage_used": 23.0
+}</code></pre>
+                </div>
+            </section>
+
+            <!-- Generate Conversations -->
+            <section id="generate" class="section">
+                <h2>Generate Conversations</h2>
+                <p>Generate synthetic customer support conversations based on your specifications.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Endpoint</span>
+                    </div>
+                    <pre><code><span class="badge badge-post">POST</span> /api/generate</code></pre>
+                </div>
+
+                <h3>Headers</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Header</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>X-API-Key</code></td>
+                            <td>Your API key</td>
+                        </tr>
+                        <tr>
+                            <td><code>Content-Type</code></td>
+                            <td>application/json</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Request Body</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>industry</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-required">Required</span></td>
+                            <td>Industry context (e.g., "technology", "e-commerce")</td>
+                        </tr>
+                        <tr>
+                            <td><code>topics</code></td>
+                            <td>array</td>
+                            <td><span class="badge badge-required">Required</span></td>
+                            <td>List of conversation topics (min 1 item)</td>
+                        </tr>
+                        <tr>
+                            <td><code>count</code></td>
+                            <td>integer</td>
+                            <td><span class="badge badge-optional">Optional</span></td>
+                            <td>Number of conversations (1-50, default: 1)</td>
+                        </tr>
+                        <tr>
+                            <td><code>customer_tone</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-optional">Optional</span></td>
+                            <td>Customer tone: "professional", "casual", "formal", "empathetic"</td>
+                        </tr>
+                        <tr>
+                            <td><code>agent_style</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-optional">Optional</span></td>
+                            <td>Agent communication style</td>
+                        </tr>
+                        <tr>
+                            <td><code>message_count</code></td>
+                            <td>integer</td>
+                            <td><span class="badge badge-optional">Optional</span></td>
+                            <td>Messages per conversation (4-20, default: 8)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Example Request</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">JSON</span>
+                    </div>
+                    <pre><code>{
+  "industry": "technology",
+  "topics": ["software bug", "account access"],
+  "count": 5,
+  "customer_tone": "professional",
+  "message_count": 8
+}</code></pre>
+                </div>
+
+                <h3>Response</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">JSON</span>
+                    </div>
+                    <pre><code>{
+  "success": true,
+  "count": 5,
+  "average_quality": 87.5,
+  "conversations": [
+    {
+      "id": "conv_abc123",
+      "industry": "technology",
+      "topic": "software bug",
+      "tone": "professional",
+      "message_count": 8,
+      "quality_score": 88.2,
+      "quality_metrics": {
+        "coherence": 92.5,
+        "diversity": 85.3,
+        "naturalness": 87.0,
+        "overall": 88.2
+      },
+      "messages": [
+        {
+          "role": "customer",
+          "content": "Hello, I'm experiencing an issue...",
+          "timestamp": "2025-12-11T10:00:00"
+        },
+        {
+          "role": "agent",
+          "content": "I'd be happy to help...",
+          "timestamp": "2025-12-11T10:00:30"
+        }
+      ]
+    }
+  ],
+  "output_files": {
+    "json": "/path/to/file.json",
+    "jsonl": "/path/to/file.jsonl",
+    "csv": "/path/to/file.csv"
+  },
+  "usage_info": {
+    "tier": "free",
+    "usage": 28,
+    "limit": 100,
+    "remaining": 72
+  }
+}</code></pre>
+                </div>
+            </section>
+
+            <!-- List Datasets -->
+            <section id="datasets" class="section">
+                <h2>List Datasets</h2>
+                <p>Retrieve a list of all generated datasets.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Endpoint</span>
+                    </div>
+                    <pre><code><span class="badge badge-get">GET</span> /api/datasets</code></pre>
+                </div>
+
+                <h3>Response</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">JSON</span>
+                    </div>
+                    <pre><code>{
+  "datasets": [
+    {
+      "filename": "technology_20251211_131818.json",
+      "size_bytes": 15234,
+      "created_at": "2025-12-11T13:18:18",
+      "format": "JSON"
+    }
+  ],
+  "total_count": 1
+}</code></pre>
+                </div>
+            </section>
+
+            <!-- Python Example -->
+            <section id="python-example" class="section">
+                <h2>Python Example</h2>
+                <p>Complete example using Python and the requests library.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>import requests
+import os
+
+# Configuration
+API_KEY = os.getenv("SYNTHETICA_API_KEY")
+BASE_URL = "http://localhost:8000"
+
+# Generate conversations
+response = requests.post(
+    f"{BASE_URL}/api/generate",
+    headers={
+        "X-API-Key": API_KEY,
+        "Content-Type": "application/json"
+    },
+    json={
+        "industry": "technology",
+        "topics": ["software bug", "account access"],
+        "count": 10,
+        "customer_tone": "professional",
+        "message_count": 8
+    }
+)
+
+if response.status_code == 200:
+    result = response.json()
+    print(f"Generated {result['count']} conversations")
+    print(f"Average quality: {result['average_quality']}")
+
+    # Access conversations
+    for conv in result['conversations']:
+        print(f"\nConversation ID: {conv['id']}")
+        print(f"Quality Score: {conv['quality_score']}")
+        print(f"Metrics: {conv['quality_metrics']}")
+else:
+    print(f"Error: {response.json()}")</code></pre>
+                </div>
+            </section>
+
+            <!-- Node.js Example -->
+            <section id="nodejs-example" class="section">
+                <h2>Node.js Example</h2>
+                <p>Complete example using Node.js and axios.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">JavaScript</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>const axios = require('axios');
+
+const API_KEY = process.env.SYNTHETICA_API_KEY;
+const BASE_URL = 'http://localhost:8000';
+
+async function generateConversations() {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/api/generate`,
+      {
+        industry: 'technology',
+        topics: ['software bug', 'account access'],
+        count: 10,
+        customer_tone: 'professional',
+        message_count: 8
+      },
+      {
+        headers: {
+          'X-API-Key': API_KEY,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const result = response.data;
+    console.log(`Generated ${result.count} conversations`);
+    console.log(`Average quality: ${result.average_quality}`);
+
+    // Access conversations
+    result.conversations.forEach(conv => {
+      console.log(`\nConversation ID: ${conv.id}`);
+      console.log(`Quality Score: ${conv.quality_score}`);
+      console.log(`Metrics:`, conv.quality_metrics);
+    });
+  } catch (error) {
+    console.error('Error:', error.response?.data || error.message);
+  }
+}
+
+generateConversations();</code></pre>
+                </div>
+            </section>
+
+            <!-- cURL Example -->
+            <section id="curl-example" class="section">
+                <h2>cURL Example</h2>
+                <p>Quick test using cURL from the command line.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Bash</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>curl -X POST http://localhost:8000/api/generate \
+  -H "X-API-Key: your-api-key-here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "industry": "technology",
+    "topics": ["software bug"],
+    "count": 1,
+    "customer_tone": "professional",
+    "message_count": 8
+  }'</code></pre>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-block');
+            const code = codeBlock.querySelector('pre code').textContent;
+
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = 'var(--success)';
+                button.style.borderColor = 'var(--success)';
+                button.style.color = 'white';
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = 'transparent';
+                    button.style.borderColor = 'var(--border)';
+                    button.style.color = 'var(--text-secondary)';
+                }, 2000);
+            });
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

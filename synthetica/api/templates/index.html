@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate - Synthetica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #151520;
+            --bg-hover: #1c1c28;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-teal: #06b6d4;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #1e293b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-links a.active {
+            color: var(--accent-primary);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 6rem 2rem 2rem;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        label a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        label a:hover {
+            text-decoration: underline;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .input-hint {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Checkbox Group */
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .checkbox-item:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-hover);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 0.5rem;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--accent-primary);
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: normal;
+            font-size: 0.9rem;
+        }
+
+        /* Slider */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            cursor: pointer;
+            border: none;
+        }
+
+        .slider-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--accent-primary);
+            font-size: 1rem;
+        }
+
+        /* Button */
+        .btn {
+            width: 100%;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 6px 25px rgba(99, 102, 241, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Alert */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .alert.active {
+            display: block;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+        }
+
+        /* Results */
+        .results-container {
+            min-height: 400px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-dark);
+            padding: 1.25rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Download Buttons */
+        .download-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-download {
+            padding: 0.75rem 1rem;
+            background: var(--success);
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-download:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Conversation Display */
+        .conversation {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .conversation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .conversation-meta {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+        }
+
+        /* Quality Metrics */
+        .quality-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(99, 102, 241, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .quality-metric {
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--bg-darker);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .metric-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .metric-coherence .metric-bar-fill {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .metric-diversity .metric-bar-fill {
+            background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+        }
+
+        .metric-naturalness .metric-bar-fill {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+
+        .metric-overall .metric-bar-fill {
+            background: linear-gradient(90deg, #6366f1, #818cf8);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quality-badge {
+            padding: 0.375rem 0.875rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .quality-high {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .quality-medium {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .quality-low {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        /* Messages */
+        .message {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid;
+        }
+
+        .message-customer {
+            background: rgba(99, 102, 241, 0.1);
+            border-left-color: var(--accent-primary);
+        }
+
+        .message-agent {
+            background: rgba(139, 92, 246, 0.1);
+            border-left-color: var(--accent-secondary);
+        }
+
+        .message-role {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        .message-customer .message-role {
+            color: var(--accent-primary);
+        }
+
+        .message-agent .message-role {
+            color: var(--accent-secondary);
+        }
+
+        .message-content {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Datasets Section */
+        .datasets-section {
+            margin-top: 2rem;
+        }
+
+        .dataset-list {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .dataset-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-dark);
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .dataset-item:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-hover);
+        }
+
+        .dataset-info {
+            flex: 1;
+        }
+
+        .dataset-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .dataset-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .dataset-download {
+            padding: 0.5rem 1rem;
+            background: var(--success);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .dataset-download:hover {
+            background: #059669;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .download-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .conversation-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">⚡ Synthetica</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/generate" class="active">Conversations</a>
+                <a href="/generate/products">Products</a>
+                <a href="/marketplace">Marketplace</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/docs">Docs</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>Generate Conversations</h1>
+            <p>Create realistic, synthetic customer support conversations for training AI models</p>
+        </div>
+
+        <div class="main-layout">
+            <!-- Configuration Panel -->
+            <div class="card">
+                <h2>Configuration</h2>
+                <form id="generateForm">
+                    <div class="form-group">
+                        <label for="apiKey">API Key <a href="/pricing">(Get free key)</a></label>
+                        <input type="text" id="apiKey" placeholder="sk-synth-..." required>
+                        <p class="input-hint">Saved locally in your browser</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="industry">Industry</label>
+                        <select id="industry" required>
+                            <option value="technology">Technology</option>
+                            <option value="e-commerce">E-commerce</option>
+                            <option value="banking">Banking</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="telecommunications">Telecommunications</option>
+                            <option value="insurance">Insurance</option>
+                            <option value="retail">Retail</option>
+                            <option value="travel">Travel & Hospitality</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Topics (select at least one)</label>
+                        <div class="checkbox-group" id="topicsContainer">
+                            <!-- Topics populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customerTone">Customer Tone</label>
+                        <select id="customerTone">
+                            <option value="professional">Professional</option>
+                            <option value="casual">Casual</option>
+                            <option value="formal">Formal</option>
+                            <option value="empathetic">Empathetic</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="agentStyle">Agent Style</label>
+                        <select id="agentStyle">
+                            <option value="professional">Professional</option>
+                            <option value="casual">Casual</option>
+                            <option value="formal">Formal</option>
+                            <option value="empathetic">Empathetic</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="messageCount">Messages: <span id="messageCountValue">8</span></label>
+                        <div class="slider-container">
+                            <input type="range" id="messageCount" min="4" max="20" step="2" value="8">
+                            <span class="slider-value" id="messageCountDisplay">8</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="count">Conversations: <span id="countValue">1</span></label>
+                        <div class="slider-container">
+                            <input type="range" id="count" min="1" max="10" value="1">
+                            <span class="slider-value" id="countDisplay">1</span>
+                        </div>
+                    </div>
+
+                    <!-- Diversity Engine Configuration -->
+                    <div class="form-group" style="border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" id="enableDiversity" style="width: auto; cursor: pointer;">
+                            <span>Enable Diversity Engine</span>
+                        </label>
+                        <p class="input-hint">Generates varied personas and reduces repetition</p>
+                    </div>
+
+                    <div id="diversityOptions" style="display: none;">
+                        <div class="form-group">
+                            <label for="similarityThreshold">Anti-Repetition Threshold: <span id="similarityThresholdValue">0.7</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="similarityThreshold" min="0.5" max="0.9" step="0.05" value="0.7">
+                                <span class="slider-value" id="similarityThresholdDisplay">0.7</span>
+                            </div>
+                            <p class="input-hint">Higher = more strict (reject similar conversations)</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="minDiversityScore">Min Diversity Score: <span id="minDiversityScoreValue">0.7</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="minDiversityScore" min="0.5" max="0.9" step="0.05" value="0.7">
+                                <span class="slider-value" id="minDiversityScoreDisplay">0.7</span>
+                            </div>
+                            <p class="input-hint">Minimum acceptable diversity for the batch</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="seedExamples">Seed Examples (optional)</label>
+                            <textarea
+                                id="seedExamples"
+                                placeholder="Paste 5-50 example conversations here (one per line) to extract style patterns..."
+                                rows="4"
+                                style="width: 100%; padding: 0.75rem; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-family: inherit; resize: vertical;"
+                            ></textarea>
+                            <p class="input-hint">System will extract and apply style patterns from examples</p>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="generateBtn">
+                        Generate Conversations
+                    </button>
+
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p class="loading-text">Generating conversations...</p>
+                    </div>
+
+                    <div class="alert alert-error" id="error"></div>
+                </form>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="card">
+                <h2>Results</h2>
+                <div class="results-container" id="resultsContainer">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💬</div>
+                        <p>Configure your settings and generate conversations to see results here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datasets Section -->
+        <div class="card datasets-section">
+            <h2>Generated Datasets</h2>
+            <div id="datasetsContainer">
+                <p style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                    Loading datasets...
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Topic mappings by industry
+        const industryTopics = {
+            technology: ['software bug', 'account access', 'feature request', 'installation help', 'performance issue'],
+            'e-commerce': ['order tracking', 'return request', 'product inquiry', 'payment issue', 'delivery problem'],
+            banking: ['transaction dispute', 'card activation', 'loan inquiry', 'account balance', 'fraud alert'],
+            healthcare: ['appointment scheduling', 'prescription refill', 'insurance question', 'test results', 'billing inquiry'],
+            telecommunications: ['service outage', 'plan upgrade', 'billing question', 'speed issue', 'roaming charges'],
+            insurance: ['claim status', 'policy change', 'coverage question', 'payment issue', 'new policy'],
+            retail: ['store location', 'product availability', 'price match', 'loyalty program', 'gift card'],
+            travel: ['booking change', 'cancellation', 'upgrade request', 'lost luggage', 'refund request']
+        };
+
+        // Update topics when industry changes
+        document.getElementById('industry').addEventListener('change', function() {
+            updateTopics(this.value);
+        });
+
+        function updateTopics(industry) {
+            const container = document.getElementById('topicsContainer');
+            const topics = industryTopics[industry] || [];
+
+            container.innerHTML = topics.map(topic => `
+                <div class="checkbox-item">
+                    <input type="checkbox" id="topic-${topic}" value="${topic}" checked>
+                    <label for="topic-${topic}">${topic}</label>
+                </div>
+            `).join('');
+        }
+
+        // Initialize topics
+        updateTopics('technology');
+
+        // Load saved API key from localStorage
+        const savedApiKey = localStorage.getItem('synthetica_api_key');
+        if (savedApiKey) {
+            document.getElementById('apiKey').value = savedApiKey;
+        }
+
+        // Save API key to localStorage when changed
+        document.getElementById('apiKey').addEventListener('change', function() {
+            localStorage.setItem('synthetica_api_key', this.value.trim());
+        });
+
+        // Update slider displays
+        document.getElementById('count').addEventListener('input', function() {
+            document.getElementById('countDisplay').textContent = this.value;
+            document.getElementById('countValue').textContent = this.value;
+        });
+
+        document.getElementById('messageCount').addEventListener('input', function() {
+            document.getElementById('messageCountDisplay').textContent = this.value;
+            document.getElementById('messageCountValue').textContent = this.value;
+        });
+
+        // Diversity engine toggle
+        document.getElementById('enableDiversity').addEventListener('change', function() {
+            const diversityOptions = document.getElementById('diversityOptions');
+            diversityOptions.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Update diversity slider displays
+        document.getElementById('similarityThreshold').addEventListener('input', function() {
+            document.getElementById('similarityThresholdDisplay').textContent = this.value;
+            document.getElementById('similarityThresholdValue').textContent = this.value;
+        });
+
+        document.getElementById('minDiversityScore').addEventListener('input', function() {
+            document.getElementById('minDiversityScoreDisplay').textContent = this.value;
+            document.getElementById('minDiversityScoreValue').textContent = this.value;
+        });
+
+        // Handle form submission
+        document.getElementById('generateForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Get selected topics
+            const selectedTopics = Array.from(document.querySelectorAll('#topicsContainer input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+
+            if (selectedTopics.length === 0) {
+                showError('Please select at least one topic');
+                return;
+            }
+
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                showError('Please enter your API key');
+                return;
+            }
+
+            const data = {
+                industry: document.getElementById('industry').value,
+                topics: selectedTopics,
+                count: parseInt(document.getElementById('count').value),
+                customer_tone: document.getElementById('customerTone').value,
+                agent_style: document.getElementById('agentStyle').value,
+                message_count: parseInt(document.getElementById('messageCount').value)
+            };
+
+            // Add diversity config if enabled
+            if (document.getElementById('enableDiversity').checked) {
+                const seedExamplesText = document.getElementById('seedExamples').value.trim();
+                const seedExamples = seedExamplesText ? seedExamplesText.split('\n').filter(line => line.trim()) : null;
+
+                data.diversity_config = {
+                    enabled: true,
+                    similarity_threshold: parseFloat(document.getElementById('similarityThreshold').value),
+                    min_diversity_score: parseFloat(document.getElementById('minDiversityScore').value),
+                    seed_examples: seedExamples
+                };
+            }
+
+            // Show loading state
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('error').classList.remove('active');
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to generate conversations');
+                }
+
+                const result = await response.json();
+                displayResults(result);
+                loadDatasets();
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                document.getElementById('generateBtn').disabled = false;
+                document.getElementById('loading').classList.remove('active');
+            }
+        });
+
+        function displayResults(result) {
+            const container = document.getElementById('resultsContainer');
+
+            let html = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${result.count}</div>
+                        <div class="stat-label">Conversations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${result.average_quality.toFixed(1)}</div>
+                        <div class="stat-label">Avg Quality</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${result.conversations.reduce((sum, c) => sum + c.message_count, 0)}</div>
+                        <div class="stat-label">Total Messages</div>
+                    </div>
+                    ${result.diversity_metrics ? `
+                        <div class="stat-card">
+                            <div class="stat-value" style="color: ${result.diversity_metrics.meets_threshold ? 'var(--success)' : 'var(--warning)'}">${(result.diversity_metrics.overall * 100).toFixed(0)}%</div>
+                            <div class="stat-label">Diversity Score ${result.diversity_metrics.meets_threshold ? '✓' : '⚠'}</div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                ${result.diversity_metrics ? `
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 8px;">
+                        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Diversity Breakdown</h3>
+                        <div style="display: grid; gap: 1rem;">
+                            <div class="metric-diversity">
+                                <div class="metric-label">Vocabulary Diversity</div>
+                                <div class="metric-value">${(result.diversity_metrics.vocabulary_diversity * 100).toFixed(0)}%</div>
+                                <div class="metric-bar">
+                                    <div class="metric-bar-fill" style="width: ${result.diversity_metrics.vocabulary_diversity * 100}%"></div>
+                                </div>
+                            </div>
+                            <div class="metric-diversity">
+                                <div class="metric-label">Structure Diversity</div>
+                                <div class="metric-value">${(result.diversity_metrics.structure_diversity * 100).toFixed(0)}%</div>
+                                <div class="metric-bar">
+                                    <div class="metric-bar-fill" style="width: ${result.diversity_metrics.structure_diversity * 100}%"></div>
+                                </div>
+                            </div>
+                            <div class="metric-diversity">
+                                <div class="metric-label">Persona Consistency</div>
+                                <div class="metric-value">${(result.diversity_metrics.persona_consistency * 100).toFixed(0)}%</div>
+                                <div class="metric-bar">
+                                    <div class="metric-bar-fill" style="width: ${result.diversity_metrics.persona_consistency * 100}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div class="download-grid">
+                    <a href="/api/datasets/${result.output_files.json.split('/').pop()}" class="btn-download" download>
+                        <span>📄</span> JSON
+                    </a>
+                    <a href="/api/datasets/${result.output_files.jsonl.split('/').pop()}" class="btn-download" download>
+                        <span>📋</span> JSONL
+                    </a>
+                    <a href="/api/datasets/${result.output_files.csv.split('/').pop()}" class="btn-download" download>
+                        <span>📊</span> CSV
+                    </a>
+                </div>
+
+                <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Conversations Preview</h3>
+            `;
+
+            result.conversations.forEach(conv => {
+                const qualityClass = conv.quality_score >= 85 ? 'quality-high' :
+                                    conv.quality_score >= 70 ? 'quality-medium' : 'quality-low';
+
+                // Build quality metrics HTML if available
+                let metricsHTML = '';
+                if (conv.quality_metrics) {
+                    metricsHTML = `
+                        <div class="quality-metrics">
+                            <div class="quality-metric metric-coherence">
+                                <div class="metric-label">Coherence</div>
+                                <div class="metric-value">${conv.quality_metrics.coherence.toFixed(1)}</div>
+                                <div class="metric-bar">
+                                    <div class="metric-bar-fill" style="width: ${conv.quality_metrics.coherence}%"></div>
+                                </div>
+                            </div>
+                            <div class="quality-metric metric-diversity">
+                                <div class="metric-label">Diversity</div>
+                                <div class="metric-value">${conv.quality_metrics.diversity.toFixed(1)}</div>
+                                <div class="metric-bar">
+                                    <div class="metric-bar-fill" style="width: ${conv.quality_metrics.diversity}%"></div>
+                                </div>
+                            </div>
+                            <div class="quality-metric metric-naturalness">
+                                <div class="metric-label">Naturalness</div>
+                                <div class="metric-value">${conv.quality_metrics.naturalness.toFixed(1)}</div>
+                                <div class="metric-bar">
+                                    <div class="metric-bar-fill" style="width: ${conv.quality_metrics.naturalness}%"></div>
+                                </div>
+                            </div>
+                            <div class="quality-metric metric-overall">
+                                <div class="metric-label">Overall</div>
+                                <div class="metric-value">${conv.quality_metrics.overall.toFixed(1)}</div>
+                                <div class="metric-bar">
+                                    <div class="metric-bar-fill" style="width: ${conv.quality_metrics.overall}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="conversation">
+                        <div class="conversation-header">
+                            <div class="conversation-meta">
+                                <span class="meta-item"><strong>Industry:</strong> ${conv.industry}</span>
+                                <span class="meta-item"><strong>Topic:</strong> ${conv.topic}</span>
+                                <span class="meta-item"><strong>Tone:</strong> ${conv.tone}</span>
+                            </div>
+                            <span class="quality-badge ${qualityClass}">
+                                Quality: ${conv.quality_score.toFixed(1)}
+                            </span>
+                        </div>
+                        ${metricsHTML}
+                        <div class="messages">
+                            ${conv.messages.map(msg => `
+                                <div class="message message-${msg.role}">
+                                    <div class="message-role">${msg.role}</div>
+                                    <div class="message-content">${msg.content}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+        }
+
+        async function loadDatasets() {
+            try {
+                const response = await fetch('/api/datasets');
+                const data = await response.json();
+
+                const container = document.getElementById('datasetsContainer');
+
+                if (data.datasets.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">No datasets generated yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="dataset-list">
+                        ${data.datasets.map(dataset => `
+                            <div class="dataset-item">
+                                <div class="dataset-info">
+                                    <div class="dataset-name">${dataset.filename}</div>
+                                    <div class="dataset-meta">
+                                        ${dataset.format} • ${(dataset.size_bytes / 1024).toFixed(1)} KB •
+                                        ${new Date(dataset.created_at).toLocaleString()}
+                                    </div>
+                                </div>
+                                <a href="/api/datasets/${dataset.filename}" class="dataset-download" download>
+                                    Download
+                                </a>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Failed to load datasets:', error);
+            }
+        }
+
+        // Load datasets on page load
+        loadDatasets();
+    </script>
+</body>
+</html>

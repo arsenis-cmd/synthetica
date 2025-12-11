@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dataset Marketplace - Synthetica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-darker: #0a0a0f;
+            --bg-dark: #12121a;
+            --bg-medium: #1a1a27;
+            --text-primary: #f0f0f3;
+            --text-secondary: #a0a0ab;
+            --text-muted: #6b6b76;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            background: rgba(18, 18, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--accent-primary);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 3rem 0;
+        }
+
+        .page-header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-header p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        /* Dataset Grid */
+        .dataset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .dataset-card {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .dataset-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-primary);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
+        }
+
+        .dataset-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .dataset-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .dataset-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-free {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .badge-premium {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-secondary);
+        }
+
+        .dataset-description {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .dataset-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(99, 102, 241, 0.05);
+            border-radius: 8px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .dataset-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .tag {
+            padding: 0.375rem 0.75rem;
+            background: var(--bg-medium);
+            color: var(--text-secondary);
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .dataset-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            border: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-medium);
+            color: var(--text-primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .conversation-preview {
+            margin-top: 1rem;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .message-customer {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .message-agent {
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .message-role {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .message-content {
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .dataset-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">⚡ Synthetica</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/generate">Generate</a>
+                <a href="/marketplace" class="active">Marketplace</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/docs">Docs</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>Dataset Marketplace</h1>
+            <p>Browse and download pre-built, high-quality synthetic datasets ready for training your AI models</p>
+        </div>
+
+        <!-- API Key Input -->
+        <div style="max-width: 600px; margin: 0 auto 2rem auto;">
+            <div style="background: var(--bg-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+                <label for="apiKey" style="display: block; margin-bottom: 0.5rem; color: var(--text-primary); font-weight: 600;">
+                    API Key <span style="color: var(--text-muted); font-weight: 400;">(Required for downloads)</span>
+                </label>
+                <div style="display: flex; gap: 1rem;">
+                    <input
+                        type="text"
+                        id="apiKey"
+                        placeholder="sk-synth-..."
+                        style="flex: 1; padding: 0.75rem; background: var(--bg-medium); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 0.95rem;"
+                    >
+                    <a href="/pricing" class="btn btn-secondary" style="text-decoration: none; white-space: nowrap;">Get Free Key</a>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem; margin-bottom: 0;">
+                    Don't have an API key? <a href="/pricing" style="color: var(--accent-primary);">Create a free account</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterDatasets('all')">All Datasets</button>
+            <button class="filter-btn" onclick="filterDatasets('technology')">Technology</button>
+            <button class="filter-btn" onclick="filterDatasets('e-commerce')">E-commerce</button>
+            <button class="filter-btn" onclick="filterDatasets('banking')">Banking</button>
+            <button class="filter-btn" onclick="filterDatasets('healthcare')">Healthcare</button>
+        </div>
+
+        <!-- Dataset Grid -->
+        <div class="dataset-grid" id="datasetGrid"></div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="modal" id="previewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Dataset Preview</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // Sample marketplace datasets
+        const marketplaceDatasets = [
+            {
+                id: 'tech-support-1000',
+                title: 'Tech Support - 1,000 Conversations',
+                description: 'Diverse technical support conversations covering software bugs, account issues, installation help, and performance problems.',
+                industry: 'technology',
+                conversations: 1000,
+                messages: 8500,
+                avgQuality: 89.5,
+                tier: 'free',
+                tags: ['Software', 'Technical Support', 'Troubleshooting'],
+                sample: [
+                    { role: 'customer', content: "Hi, I'm having trouble logging into my account. It keeps saying my password is incorrect." },
+                    { role: 'agent', content: "I'd be happy to help you regain access to your account. Let me verify your identity first. Can you confirm the email address associated with your account?" }
+                ]
+            },
+            {
+                id: 'ecommerce-500',
+                title: 'E-commerce Support - 500 Conversations',
+                description: 'Customer service conversations about order tracking, returns, product inquiries, and shipping issues.',
+                industry: 'e-commerce',
+                conversations: 500,
+                messages: 4200,
+                avgQuality: 91.2,
+                tier: 'free',
+                tags: ['Orders', 'Returns', 'Shipping'],
+                sample: [
+                    { role: 'customer', content: "I ordered a product last week but haven't received any tracking information yet." },
+                    { role: 'agent', content: "I apologize for the delay in tracking information. Let me look up your order right away. Could you please provide your order number?" }
+                ]
+            },
+            {
+                id: 'banking-premium',
+                title: 'Banking Support - 2,000 Conversations',
+                description: 'Professional banking support scenarios including transactions, fraud, account management, and loan inquiries.',
+                industry: 'banking',
+                conversations: 2000,
+                messages: 18000,
+                avgQuality: 93.8,
+                tier: 'premium',
+                tags: ['Transactions', 'Fraud', 'Accounts', 'Loans'],
+                sample: [
+                    { role: 'customer', content: "I noticed a charge on my account that I don't recognize. I'm worried it might be fraudulent." },
+                    { role: 'agent', content: "I understand your concern, and we take potential fraud very seriously. Let me review the transaction immediately. Can you tell me the date and amount of the charge?" }
+                ]
+            },
+            {
+                id: 'healthcare-300',
+                title: 'Healthcare Support - 300 Conversations',
+                description: 'HIPAA-compliant healthcare support conversations covering appointments, prescriptions, insurance, and billing.',
+                industry: 'healthcare',
+                conversations: 300,
+                messages: 2800,
+                avgQuality: 90.1,
+                tier: 'free',
+                tags: ['Appointments', 'Prescriptions', 'Insurance', 'Billing'],
+                sample: [
+                    { role: 'customer', content: "I need to schedule a follow-up appointment with Dr. Smith. My prescription is running low." },
+                    { role: 'agent', content: "I'd be happy to help schedule your appointment and coordinate your prescription refill. Let me check Dr. Smith's availability. When would be most convenient for you?" }
+                ]
+            },
+            {
+                id: 'tech-advanced-5000',
+                title: 'Advanced Tech Support - 5,000 Conversations',
+                description: 'Enterprise-grade technical support dataset with complex troubleshooting, API issues, and developer queries.',
+                industry: 'technology',
+                conversations: 5000,
+                messages: 45000,
+                avgQuality: 94.5,
+                tier: 'premium',
+                tags: ['API', 'Developer', 'Enterprise', 'Advanced'],
+                sample: [
+                    { role: 'customer', content: "We're experiencing intermittent 500 errors from your API in production. Our monitoring shows it started around 2 PM UTC." },
+                    { role: 'agent', content: "Thank you for reporting this. I'm escalating this to our engineering team immediately. Can you share the API endpoint and request headers so we can investigate?" }
+                ]
+            },
+            {
+                id: 'retail-seasonal',
+                title: 'Retail Support - Seasonal 1,200 Conversations',
+                description: 'Retail customer service covering store locations, product availability, loyalty programs, and seasonal promotions.',
+                industry: 'e-commerce',
+                conversations: 1200,
+                messages: 10000,
+                avgQuality: 88.7,
+                tier: 'free',
+                tags: ['Retail', 'In-Store', 'Loyalty', 'Promotions'],
+                sample: [
+                    { role: 'customer', content: "Do you have the new winter collection available in stores yet? I'd like to check it out in person." },
+                    { role: 'agent', content: "Great question! Our winter collection just arrived in most locations. Which store are you planning to visit? I can check their current inventory for you." }
+                ]
+            }
+        ];
+
+        let currentFilter = 'all';
+
+        function renderDatasets() {
+            const grid = document.getElementById('datasetGrid');
+            const filtered = currentFilter === 'all'
+                ? marketplaceDatasets
+                : marketplaceDatasets.filter(d => d.industry === currentFilter);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📦</div>
+                        <p>No datasets found for this category.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(dataset => `
+                <div class="dataset-card">
+                    <div class="dataset-header">
+                        <div>
+                            <h3 class="dataset-title">${dataset.title}</h3>
+                        </div>
+                        <span class="dataset-badge badge-${dataset.tier}">${dataset.tier}</span>
+                    </div>
+                    <p class="dataset-description">${dataset.description}</p>
+
+                    <div class="dataset-stats">
+                        <div class="stat">
+                            <div class="stat-value">${dataset.conversations.toLocaleString()}</div>
+                            <div class="stat-label">Conversations</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${(dataset.messages / 1000).toFixed(1)}K</div>
+                            <div class="stat-label">Messages</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${dataset.avgQuality}</div>
+                            <div class="stat-label">Quality</div>
+                        </div>
+                    </div>
+
+                    <div class="dataset-tags">
+                        ${dataset.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+
+                    <div class="dataset-actions">
+                        <button class="btn btn-secondary" onclick="previewDataset('${dataset.id}')">Preview</button>
+                        <button class="btn btn-primary" onclick="downloadDataset('${dataset.id}')">
+                            ${dataset.tier === 'premium' ? 'Get Premium' : 'Download Free'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterDatasets(industry) {
+            currentFilter = industry;
+
+            // Update active filter button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            renderDatasets();
+        }
+
+        function previewDataset(id) {
+            const dataset = marketplaceDatasets.find(d => d.id === id);
+            if (!dataset) return;
+
+            const modal = document.getElementById('previewModal');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+
+            title.textContent = dataset.title + ' - Preview';
+            body.innerHTML = `
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">${dataset.description}</p>
+                <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Sample Conversation</h3>
+                <div class="conversation-preview">
+                    ${dataset.sample.map(msg => `
+                        <div class="message message-${msg.role}">
+                            <div class="message-role">${msg.role}</div>
+                            <div class="message-content">${msg.content}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('previewModal').classList.remove('active');
+        }
+
+        function downloadDataset(id) {
+            const dataset = marketplaceDatasets.find(d => d.id === id);
+            if (!dataset) return;
+
+            // Check for premium tier
+            if (dataset.tier === 'premium') {
+                if (confirm('This is a premium dataset. Upgrade to access premium features?')) {
+                    window.location.href = '/pricing';
+                }
+                return;
+            }
+
+            // Check API key
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                alert('Please enter your API key to download datasets.');
+                document.getElementById('apiKey').focus();
+                return;
+            }
+
+            // Save API key to localStorage
+            localStorage.setItem('synthetica_api_key', apiKey);
+
+            // Show download confirmation
+            alert(`Dataset "${dataset.title}" download initiated!\n\nIn production, this would:\n1. Validate your API key\n2. Check your usage limits\n3. Generate and download the dataset\n4. Track usage against your account\n\nFor now, this is a demo marketplace.`);
+        }
+
+        // Load API key from localStorage on page load
+        function loadApiKey() {
+            const savedKey = localStorage.getItem('synthetica_api_key');
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+            }
+        }
+
+        // Close modal on background click
+        document.getElementById('previewModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Fetch real datasets from backend
+        async function loadRealDatasets() {
+            try {
+                const response = await fetch('/api/datasets');
+                const data = await response.json();
+
+                if (data.datasets && data.datasets.length > 0) {
+                    // Add a section showing real generated datasets
+                    const grid = document.getElementById('datasetGrid');
+
+                    const realDatasetsHTML = `
+                        <div style="grid-column: 1/-1; margin-bottom: 2rem;">
+                            <h2 style="color: var(--text-primary); margin-bottom: 1rem; font-size: 1.5rem;">
+                                📊 Your Generated Datasets
+                            </h2>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+                                ${data.datasets.slice(0, 10).map(dataset => `
+                                    <div class="dataset-card" style="padding: 1rem;">
+                                        <h4 style="color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1rem;">
+                                            ${dataset.filename}
+                                        </h4>
+                                        <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                                            ${dataset.format} • ${(dataset.size_bytes / 1024).toFixed(1)} KB<br>
+                                            ${new Date(dataset.created_at).toLocaleDateString()}
+                                        </div>
+                                        <a href="/api/datasets/${dataset.filename}"
+                                           class="btn btn-primary"
+                                           download
+                                           style="display: block; text-decoration: none; font-size: 0.875rem; padding: 0.5rem;">
+                                            Download
+                                        </a>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div style="grid-column: 1/-1; margin: 2rem 0;">
+                            <h2 style="color: var(--text-primary); margin-bottom: 1rem; font-size: 1.5rem;">
+                                🎁 Pre-Built Marketplace Datasets
+                            </h2>
+                        </div>
+                    `;
+
+                    grid.insertAdjacentHTML('afterbegin', realDatasetsHTML);
+                }
+            } catch (error) {
+                console.error('Failed to load real datasets:', error);
+            }
+        }
+
+        // Initial render
+        loadApiKey();
+        renderDatasets();
+        loadRealDatasets();
+    </script>
+</body>
+</html>

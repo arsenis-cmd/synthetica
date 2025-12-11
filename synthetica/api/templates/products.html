@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Generator - Synthetica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-darker: #0a0a0f;
+            --bg-dark: #12121a;
+            --bg-medium: #1a1a27;
+            --bg-hover: #23233a;
+            --text-primary: #f0f0f3;
+            --text-secondary: #a0a0ab;
+            --text-muted: #6b6b76;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            background: rgba(18, 18, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--accent-primary);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-medium);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .input-hint {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .alert.active {
+            display: block;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-dark);
+            padding: 1.25rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .product-card {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .product-header {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .product-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .product-category {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-primary);
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .product-description {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .product-section {
+            margin-top: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .attributes {
+            background: rgba(99, 102, 241, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .attribute-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .attribute-item:last-child {
+            border-bottom: none;
+        }
+
+        .attribute-key {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .attribute-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .download-btn {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            background: var(--success);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .download-btn:hover {
+            background: #059669;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">⚡ Synthetica</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/generate">Conversations</a>
+                <a href="/generate/products" class="active">Products</a>
+                <a href="/marketplace">Marketplace</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/docs">Docs</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>Generate Products</h1>
+            <p>Create synthetic product descriptions and customer reviews for e-commerce training</p>
+        </div>
+
+        <div class="main-layout">
+            <!-- Configuration Panel -->
+            <div class="card">
+                <h2>Configuration</h2>
+                <form id="generateForm">
+                    <div class="form-group">
+                        <label for="apiKey">API Key <a href="/pricing" style="color: var(--accent-primary);">(Get free key)</a></label>
+                        <input type="text" id="apiKey" placeholder="sk-synth-..." required>
+                        <p class="input-hint">Saved locally in your browser</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Product Category</label>
+                        <select id="category" required>
+                            <option value="electronics">Electronics</option>
+                            <option value="clothing">Clothing & Fashion</option>
+                            <option value="home">Home & Garden</option>
+                            <option value="beauty">Beauty & Personal Care</option>
+                            <option value="sports">Sports & Outdoors</option>
+                            <option value="books">Books & Media</option>
+                            <option value="toys">Toys & Games</option>
+                            <option value="food">Food & Beverages</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="count">Products: <span id="countValue">1</span></label>
+                        <input type="range" id="count" min="1" max="10" value="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" id="includeReviews" checked style="width: auto;">
+                            Include Customer Reviews
+                        </label>
+                    </div>
+
+                    <div class="form-group" id="reviewCountGroup">
+                        <label for="reviewCount">Reviews per Product: <span id="reviewCountValue">5</span></label>
+                        <input type="range" id="reviewCount" min="1" max="10" value="5">
+                    </div>
+
+                    <button type="submit" class="btn" id="generateBtn">
+                        Generate Products
+                    </button>
+
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p class="loading-text">Generating products...</p>
+                    </div>
+
+                    <div class="alert alert-error" id="error"></div>
+                </form>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="card">
+                <h2>Results</h2>
+                <div id="resultsContainer">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🛍️</div>
+                        <p>Configure your settings and generate products to see results here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load API key from localStorage
+        const savedKey = localStorage.getItem('synthetica_api_key');
+        if (savedKey) {
+            document.getElementById('apiKey').value = savedKey;
+        }
+
+        // Update slider values
+        document.getElementById('count').addEventListener('input', function() {
+            document.getElementById('countValue').textContent = this.value;
+        });
+
+        document.getElementById('reviewCount').addEventListener('input', function() {
+            document.getElementById('reviewCountValue').textContent = this.value;
+        });
+
+        // Toggle review count visibility
+        document.getElementById('includeReviews').addEventListener('change', function() {
+            const reviewGroup = document.getElementById('reviewCountGroup');
+            reviewGroup.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Form submission
+        document.getElementById('generateForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                showError('Please enter your API key');
+                return;
+            }
+
+            // Save API key
+            localStorage.setItem('synthetica_api_key', apiKey);
+
+            const data = {
+                category: document.getElementById('category').value,
+                count: parseInt(document.getElementById('count').value),
+                include_reviews: document.getElementById('includeReviews').checked,
+                review_count: parseInt(document.getElementById('reviewCount').value)
+            };
+
+            // Show loading
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('error').classList.remove('active');
+
+            try {
+                const response = await fetch('/api/generate/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail?.error || error.detail || 'Failed to generate products');
+                }
+
+                const result = await response.json();
+                displayResults(result);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                document.getElementById('generateBtn').disabled = false;
+                document.getElementById('loading').classList.remove('active');
+            }
+        });
+
+        function displayResults(result) {
+            const container = document.getElementById('resultsContainer');
+
+            let html = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${result.count}</div>
+                        <div class="stat-label">Products</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${result.usage_info.remaining}</div>
+                        <div class="stat-label">Remaining</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${result.usage_info.tier}</div>
+                        <div class="stat-label">Tier</div>
+                    </div>
+                </div>
+
+                ${result.output_file ? `
+                    <a href="/api/datasets/${result.output_file.split('/').pop()}" class="download-btn" download>
+                        📥 Download All Products (JSON)
+                    </a>
+                ` : ''}
+
+                <h3 style="margin: 2rem 0 1rem 0; color: var(--text-primary);">Generated Products</h3>
+            `;
+
+            result.products.forEach(product => {
+                html += `
+                    <div class="product-card">
+                        <div class="product-header">
+                            <div class="product-title">Product ID: ${product.id}</div>
+                            <span class="product-category">${product.category}</span>
+                        </div>
+
+                        <div class="product-description">
+                            ${product.description.substring(0, 300)}${product.description.length > 300 ? '...' : ''}
+                        </div>
+
+                        ${Object.keys(product.attributes).length > 0 ? `
+                            <div class="product-section">
+                                <div class="section-title">Attributes</div>
+                                <div class="attributes">
+                                    ${Object.entries(product.attributes).map(([key, value]) => `
+                                        <div class="attribute-item">
+                                            <span class="attribute-key">${key}</span>
+                                            <span class="attribute-value">${typeof value === 'object' ? JSON.stringify(value) : value}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${product.reviews && product.reviews.length > 0 ? `
+                            <div class="product-section">
+                                <div class="section-title">Customer Reviews (${product.reviews.length})</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                                    Reviews generated successfully
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+        }
+    </script>
+</body>
+</html>

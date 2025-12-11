@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - Synthetica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #151520;
+            --bg-hover: #1c1c28;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-teal: #06b6d4;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #1e293b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-links a.active {
+            color: var(--accent-primary);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem 2rem 2rem;
+        }
+
+        /* Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .page-header p {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+        }
+
+        /* API Key Section */
+        .api-key-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .api-key-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .api-key-card > p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .api-key-display {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .api-key-input {
+            flex: 1;
+            padding: 0.875rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .btn-copy {
+            padding: 0.875rem 1.5rem;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: var(--accent-secondary);
+            transform: translateY(-2px);
+        }
+
+        /* Usage Stats */
+        .usage-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .usage-stat {
+            background: var(--bg-dark);
+            padding: 1.25rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .usage-stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .usage-stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            transition: width 0.3s ease;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            border: 1px solid;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        /* Pricing Grid */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .pricing-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.2);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--accent-primary);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.2);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            padding: 0.375rem 1rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .plan-name {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-price {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .plan-price .currency {
+            font-size: 1.5rem;
+        }
+
+        .plan-period {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .plan-features li {
+            padding: 0.75rem 0;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .plan-features li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+            font-size: 1.125rem;
+        }
+
+        /* Buttons */
+        .btn-pricing {
+            width: 100%;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 25px rgba(99, 102, 241, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .usage-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">⚡ Synthetica</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/generate">Generate</a>
+                <a href="/marketplace">Marketplace</a>
+                <a href="/pricing" class="active">Pricing</a>
+                <a href="/docs">Docs</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-header">
+            <h1>Choose Your Plan</h1>
+            <p>Start free, scale as you grow. No credit card required.</p>
+        </div>
+
+        <!-- API Key Section (shown after account creation) -->
+        <div class="api-key-card" id="apiKeySection" style="display: none;">
+            <h2>Your API Key</h2>
+            <p>Use this key in the X-API-Key header for all API requests</p>
+            <div class="api-key-display">
+                <input type="text" class="api-key-input" id="apiKeyInput" readonly>
+                <button class="btn-copy" onclick="copyApiKey()">Copy</button>
+            </div>
+
+            <div class="usage-grid" id="usageStats" style="display: none;">
+                <div class="usage-stat">
+                    <div class="usage-stat-value" id="usageValue">0</div>
+                    <div class="usage-stat-label">Used</div>
+                </div>
+                <div class="usage-stat">
+                    <div class="usage-stat-value" id="limitValue">0</div>
+                    <div class="usage-stat-label">Limit</div>
+                </div>
+                <div class="usage-stat">
+                    <div class="usage-stat-value" id="remainingValue">0</div>
+                    <div class="usage-stat-label">Remaining</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+            </div>
+
+            <div id="alertContainer"></div>
+        </div>
+
+        <!-- Pricing Cards -->
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3 class="plan-name">Free</h3>
+                <div class="plan-price">
+                    <span class="currency">$</span>0
+                </div>
+                <p class="plan-period">Forever free</p>
+
+                <ul class="plan-features">
+                    <li>100 conversations</li>
+                    <li>All industries & topics</li>
+                    <li>Quality scoring</li>
+                    <li>JSON, JSONL, CSV export</li>
+                    <li>API access</li>
+                    <li>Community support</li>
+                </ul>
+
+                <button class="btn-pricing btn-secondary" onclick="createFreeAccount()">
+                    Get Started Free
+                </button>
+            </div>
+
+            <div class="pricing-card featured">
+                <span class="popular-badge">Most Popular</span>
+                <h3 class="plan-name">Starter</h3>
+                <div class="plan-price">
+                    <span class="currency">$</span>99
+                </div>
+                <p class="plan-period">One-time payment</p>
+
+                <ul class="plan-features">
+                    <li>1,000 conversations</li>
+                    <li>All industries & topics</li>
+                    <li>Quality scoring</li>
+                    <li>JSON, JSONL, CSV export</li>
+                    <li>API access</li>
+                    <li>Priority support</li>
+                    <li>Email support</li>
+                </ul>
+
+                <button class="btn-pricing btn-primary" onclick="upgradePlan('starter')">
+                    Upgrade to Starter
+                </button>
+            </div>
+
+            <div class="pricing-card">
+                <h3 class="plan-name">Growth</h3>
+                <div class="plan-price">
+                    <span class="currency">$</span>450
+                </div>
+                <p class="plan-period">One-time payment</p>
+
+                <ul class="plan-features">
+                    <li>10,000 conversations</li>
+                    <li>All industries & topics</li>
+                    <li>Quality scoring</li>
+                    <li>JSON, JSONL, CSV export</li>
+                    <li>API access</li>
+                    <li>Priority support</li>
+                    <li>Custom integrations</li>
+                    <li>SLA guarantee</li>
+                </ul>
+
+                <button class="btn-pricing btn-primary" onclick="upgradePlan('growth')">
+                    Upgrade to Growth
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentApiKey = localStorage.getItem('synthetica_api_key');
+
+        // Load API key on page load
+        if (currentApiKey) {
+            showApiKey(currentApiKey);
+            loadUsageStats();
+        }
+
+        async function createFreeAccount() {
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create account');
+                }
+
+                const data = await response.json();
+                currentApiKey = data.api_key;
+                localStorage.setItem('synthetica_api_key', currentApiKey);
+
+                showApiKey(currentApiKey);
+                showAlert('success', 'Account created successfully! Your API key has been generated.');
+                loadUsageStats();
+
+            } catch (error) {
+                showAlert('error', 'Failed to create account: ' + error.message);
+            }
+        }
+
+        async function upgradePlan(tier) {
+            if (!currentApiKey) {
+                showAlert('warning', 'Please create a free account first.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': currentApiKey
+                    },
+                    body: JSON.stringify({
+                        tier: tier,
+                        success_url: window.location.href + '?success=true',
+                        cancel_url: window.location.href + '?canceled=true'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create checkout session');
+                }
+
+                const data = await response.json();
+                // Redirect to Stripe checkout
+                window.location.href = data.checkout_url;
+
+            } catch (error) {
+                showAlert('error', 'Failed to start checkout: ' + error.message);
+            }
+        }
+
+        async function loadUsageStats() {
+            if (!currentApiKey) return;
+
+            try {
+                const response = await fetch('/api/usage', {
+                    headers: {
+                        'X-API-Key': currentApiKey
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load usage stats');
+                }
+
+                const data = await response.json();
+
+                document.getElementById('usageValue').textContent = data.usage.toLocaleString();
+                document.getElementById('limitValue').textContent = data.limit.toLocaleString();
+                document.getElementById('remainingValue').textContent = data.remaining.toLocaleString();
+                document.getElementById('progressBar').style.width = data.percentage_used + '%';
+                document.getElementById('usageStats').style.display = 'grid';
+
+                // Show warning if approaching limit
+                if (data.percentage_used >= 90) {
+                    showAlert('warning', 'You are approaching your usage limit. Consider upgrading your plan.');
+                } else if (data.percentage_used >= 100) {
+                    showAlert('error', 'You have reached your usage limit. Please upgrade to continue.');
+                }
+
+            } catch (error) {
+                console.error('Failed to load usage stats:', error);
+            }
+        }
+
+        function showApiKey(apiKey) {
+            document.getElementById('apiKeySection').style.display = 'block';
+            document.getElementById('apiKeyInput').value = apiKey;
+        }
+
+        function copyApiKey() {
+            const input = document.getElementById('apiKeyInput');
+            input.select();
+            document.execCommand('copy');
+            showAlert('success', 'API key copied to clipboard!');
+        }
+
+        function showAlert(type, message) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(alert);
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Check for success/cancel params
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'true') {
+            showAlert('success', 'Payment successful! Your account has been upgraded.');
+            loadUsageStats();
+        } else if (urlParams.get('canceled') === 'true') {
+            showAlert('warning', 'Payment was canceled.');
+        }
+    </script>
+</body>
+</html>
