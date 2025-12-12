@@ -1,5 +1,5 @@
 """
-Customer support conversation generator using Claude API.
+Domain-agnostic conversation generator using Claude API.
 """
 import json
 import logging
@@ -17,6 +17,7 @@ from synthetica.schemas.conversation import (
     Message,
 )
 from synthetica.generators.diversity import DiversityEngine, Persona
+from synthetica.generators.domain_vocabulary import DomainVocabulary
 
 logger = logging.getLogger(__name__)
 
@@ -81,14 +82,18 @@ class ConversationGenerator:
                 messages=[{"role": "user", "content": prompt}]
             )
 
-            # Parse response
+            # Parse response with config for role names
             conversation_text = response.content[0].text
-            messages = self._parse_conversation(conversation_text, config.message_count)
+            messages = self._parse_conversation(conversation_text, config.message_count, config)
 
-            # Create conversation object with persona metadata
+            # Create conversation object with full metadata including domain
             metadata = ConversationMetadata(
+                domain=config.domain,
                 industry=config.industry,
                 topic=topic,
+                scenario=config.scenario,
+                role_1=config.role_1,
+                role_2=config.role_2,
                 tone=config.tone,
                 message_count=len(messages),
             )
@@ -140,37 +145,55 @@ class ConversationGenerator:
         topic: str,
         persona: Optional[Persona] = None
     ) -> str:
-        """Build the prompt for Claude to generate a conversation."""
-        customer_name = config.customer_name or "the customer"
-        company_name = config.company_name or "the company"
+        """Build the prompt for Claude to generate a domain-agnostic conversation."""
+        # Get domain context
+        domain_context = DomainVocabulary.build_context_hint(
+            config.domain,
+            config.role_1,
+            config.role_2,
+            config.scenario
+        )
 
-        # Build base prompt
-        prompt = f"""Generate a realistic customer support conversation in the {config.industry} industry.
+        role_1_name = config.role_1_name or f"the {config.role_1}"
+        role_2_name = config.role_2_name or f"the {config.role_2}"
 
-Topic: {topic}
+        # Get role descriptions
+        role_1_desc = DomainVocabulary.get_role_description(config.domain, config.role_1)
+        role_2_desc = DomainVocabulary.get_role_description(config.domain, config.role_2)
+
+        # Build base prompt with domain-agnostic language
+        scenario_text = config.scenario if config.scenario else topic
+
+        prompt = f"""Generate a realistic conversation in the following context:
+
+{domain_context}
+
+Specific Context:
+Industry: {config.industry}
+Topic/Scenario: {scenario_text}
 Tone: {config.tone}
-Number of messages: {config.message_count} (must alternate between customer and agent, starting with customer)
+Number of messages: {config.message_count} (must alternate between {config.role_1} and {config.role_2}, starting with {config.role_1})
 
 Requirements:
-- Create a natural, realistic customer support interaction
-- Customer name: {customer_name}
-- Company: {company_name}
+- Create a natural, realistic interaction appropriate for this domain
+- {config.role_1.capitalize()} identifier: {role_1_name}
+- {config.role_2.capitalize()} identifier: {role_2_name}
 - The conversation should feel authentic with appropriate language for the {config.tone} tone
-- Include realistic details, product names, issues, and resolutions relevant to {config.industry}
+- Include realistic details, terminology, and context relevant to {config.industry} and this domain
 - Messages should flow naturally and build on previous context
-- Agent should be helpful and professional
+- {config.role_2.capitalize()} should be {DomainVocabulary.get_tone_guidance(config.domain).split(',')[0].lower()}
 """
 
         # Add persona-specific guidance if available
         if persona:
             prompt += f"""
-Customer Persona Characteristics:
+{config.role_1.capitalize()} Persona Characteristics:
 - Age range: {persona.age_range}
 - Communication style: {persona.communication_style}
 - Tech savviness: {persona.tech_savviness}
 - Patience level: {persona.patience_level}
 - Vocabulary level: {persona.vocabulary_level}
-- The customer should exhibit these traits naturally through their messages
+- The {config.role_1} should exhibit these traits naturally through their messages
 """
             if persona.typical_phrases:
                 prompt += f"- May use phrases like: {', '.join(persona.typical_phrases[:2])}\n"
@@ -184,33 +207,35 @@ Customer Persona Characteristics:
             if style_guidance:
                 prompt += f"\n{style_guidance}"
 
-        # Add format instructions
-        prompt += """
-Format your response as a series of messages, one per line, in this exact format:
-CUSTOMER: [message text]
-AGENT: [message text]
+        # Add format instructions with dynamic role names
+        role_1_upper = config.role_1.upper()
+        role_2_upper = config.role_2.upper()
 
-Start with the customer's initial message and alternate strictly between CUSTOMER and AGENT.
-Generate exactly {message_count} messages total.
+        prompt += f"""
+Format your response as a series of messages, one per line, in this exact format:
+{role_1_upper}: [message text]
+{role_2_upper}: [message text]
+
+Start with the {config.role_1}'s initial message and alternate strictly between {role_1_upper} and {role_2_upper}.
+Generate exactly {{message_count}} messages total.
 
 Example format:
-CUSTOMER: Hi, I'm having trouble accessing my account.
-AGENT: Hello! I'd be happy to help you with that. Can you tell me what error message you're seeing?
-CUSTOMER: It says "Invalid credentials" even though I'm sure my password is correct.
-AGENT: I understand how frustrating that can be. Let me check your account status...
+{role_1_upper}: [First message appropriate for this domain and role]
+{role_2_upper}: [Response appropriate for this domain and role]
 
 Now generate the conversation:"""
 
         prompt = prompt.format(message_count=config.message_count)
         return prompt
 
-    def _parse_conversation(self, text: str, expected_count: int) -> List[Message]:
+    def _parse_conversation(self, text: str, expected_count: int, config: ConversationConfig) -> List[Message]:
         """
         Parse the generated conversation text into Message objects.
 
         Args:
             text: Raw conversation text from Claude
             expected_count: Expected number of messages
+            config: Conversation configuration with role names
 
         Returns:
             List of Message objects
@@ -222,21 +247,33 @@ Now generate the conversation:"""
         base_time = datetime.now() - timedelta(hours=1)
         current_time = base_time
 
+        # Dynamic role prefixes
+        role_1_prefix = f"{config.role_1.upper()}:"
+        role_2_prefix = f"{config.role_2.upper()}:"
+
         for line in lines:
             line = line.strip()
             if not line:
                 continue
 
-            # Parse CUSTOMER: or AGENT: prefix
-            if line.startswith("CUSTOMER:"):
-                role = "customer"
-                content = line[9:].strip()
-            elif line.startswith("AGENT:"):
-                role = "agent"
-                content = line[6:].strip()
+            # Parse dynamic role prefixes
+            if line.startswith(role_1_prefix):
+                role = config.role_1
+                content = line[len(role_1_prefix):].strip()
+            elif line.startswith(role_2_prefix):
+                role = config.role_2
+                content = line[len(role_2_prefix):].strip()
             else:
-                # Skip lines that don't match format
-                continue
+                # Try backwards compatibility with CUSTOMER/AGENT for existing seeds
+                if line.startswith("CUSTOMER:"):
+                    role = config.role_1  # Map CUSTOMER to role_1
+                    content = line[9:].strip()
+                elif line.startswith("AGENT:"):
+                    role = config.role_2  # Map AGENT to role_2
+                    content = line[6:].strip()
+                else:
+                    # Skip lines that don't match any format
+                    continue
 
             if content:
                 messages.append(Message(
