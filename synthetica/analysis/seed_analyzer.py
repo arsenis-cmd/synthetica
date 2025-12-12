@@ -1,12 +1,14 @@
 """
-Seed conversation analyzer for extracting style patterns.
+Seed conversation analyzer for extracting style patterns and detecting domain.
 """
 import logging
 import re
 import statistics
 from collections import Counter
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple, Optional
 import random
+
+from synthetica.generators.domain_vocabulary import DomainVocabulary
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,93 @@ class SeedAnalyzer:
             ]
         }
 
+    def detect_domain(self, conversations: List[Dict[str, Any]]) -> Tuple[str, Dict[str, int]]:
+        """
+        Detect the most likely domain based on vocabulary analysis.
+
+        Args:
+            conversations: List of conversation dictionaries
+
+        Returns:
+            Tuple of (detected_domain, domain_scores)
+        """
+        if not conversations:
+            return "customer_support", {}
+
+        # Collect all message content
+        all_text = []
+        for conv in conversations:
+            messages = conv.get('messages', [])
+            for msg in messages:
+                content = msg.get('content', '').lower()
+                all_text.append(content)
+
+        combined_text = ' '.join(all_text)
+
+        # Score each domain based on vocabulary matches
+        domain_scores = {}
+        supported_domains = DomainVocabulary.get_supported_domains()
+
+        for domain in supported_domains:
+            vocabulary = DomainVocabulary.get_vocabulary_hints(domain)
+            score = 0
+
+            # Count vocabulary matches
+            for vocab_word in vocabulary:
+                # Use word boundary regex to match whole words
+                pattern = r'\b' + re.escape(vocab_word.lower()) + r'\b'
+                matches = len(re.findall(pattern, combined_text))
+                score += matches
+
+            domain_scores[domain] = score
+
+        # Find domain with highest score
+        if not domain_scores or all(score == 0 for score in domain_scores.values()):
+            logger.warning("No domain vocabulary matches found, defaulting to customer_support")
+            return "customer_support", domain_scores
+
+        detected_domain = max(domain_scores, key=domain_scores.get)
+        logger.info(f"Detected domain: {detected_domain} (score: {domain_scores[detected_domain]})")
+
+        return detected_domain, domain_scores
+
+    def extract_roles(self, conversations: List[Dict[str, Any]]) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Extract the two primary roles from seed conversations.
+
+        Args:
+            conversations: List of conversation dictionaries
+
+        Returns:
+            Tuple of (role_1, role_2) or (None, None) if cannot determine
+        """
+        if not conversations:
+            return None, None
+
+        # Collect all unique roles
+        role_counts = Counter()
+
+        for conv in conversations:
+            messages = conv.get('messages', [])
+            for msg in messages:
+                role = msg.get('role', '').lower().strip()
+                if role:
+                    role_counts[role] += 1
+
+        # Get the two most common roles
+        most_common = role_counts.most_common(2)
+
+        if len(most_common) < 2:
+            logger.warning("Could not detect two distinct roles from seeds")
+            return None, None
+
+        role_1 = most_common[0][0]
+        role_2 = most_common[1][0]
+
+        logger.info(f"Detected roles: {role_1} ({most_common[0][1]} messages), {role_2} ({most_common[1][1]} messages)")
+
+        return role_1, role_2
+
     def analyze_seeds(self, conversations: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Analyze a collection of seed conversations.
@@ -53,11 +142,20 @@ class SeedAnalyzer:
 
         logger.info(f"Analyzing {len(conversations)} seed conversations")
 
-        all_messages = []
-        customer_messages = []
-        agent_messages = []
+        # Detect domain and roles from conversations
+        detected_domain, domain_scores = self.detect_domain(conversations)
+        role_1, role_2 = self.extract_roles(conversations)
 
-        # Collect all messages
+        # If roles not detected, use domain defaults
+        if not role_1 or not role_2:
+            role_1, role_2 = DomainVocabulary.get_default_roles(detected_domain)
+            logger.info(f"Using default roles for {detected_domain}: {role_1}, {role_2}")
+
+        all_messages = []
+        role_1_messages = []
+        role_2_messages = []
+
+        # Collect all messages with dynamic role detection
         for conv in conversations:
             messages = conv.get('messages', [])
             all_messages.extend(messages)
@@ -66,47 +164,61 @@ class SeedAnalyzer:
                 role = msg.get('role', '').lower()
                 content = msg.get('content', '')
 
-                if role == 'customer':
-                    customer_messages.append(content)
-                elif role == 'agent':
-                    agent_messages.append(content)
+                # Match against detected roles (or fallback to customer/agent for backwards compatibility)
+                if role == role_1 or (role == 'customer' and role_1 == 'customer'):
+                    role_1_messages.append(content)
+                elif role == role_2 or (role == 'agent' and role_2 == 'agent'):
+                    role_2_messages.append(content)
 
         # Analyze different aspects
         analysis = {
-            'message_stats': self._analyze_message_stats(all_messages, customer_messages, agent_messages),
-            'vocabulary': self._analyze_vocabulary(customer_messages),
-            'formality': self._analyze_formality(customer_messages),
-            'sentiment': self._analyze_sentiment(customer_messages),
-            'emoji_usage': self._analyze_emoji_usage(customer_messages),
-            'typo_patterns': self._analyze_typo_patterns(customer_messages),
-            'common_phrases': self._extract_common_phrases(customer_messages),
-            'sentence_patterns': self._analyze_sentence_patterns(customer_messages),
+            'domain': detected_domain,
+            'domain_scores': domain_scores,
+            'role_1': role_1,
+            'role_2': role_2,
+            'message_stats': self._analyze_message_stats(all_messages, role_1_messages, role_2_messages),
+            'vocabulary': self._analyze_vocabulary(role_1_messages),
+            'formality': self._analyze_formality(role_1_messages),
+            'sentiment': self._analyze_sentiment(role_1_messages),
+            'emoji_usage': self._analyze_emoji_usage(role_1_messages),
+            'typo_patterns': self._analyze_typo_patterns(role_1_messages),
+            'common_phrases': self._extract_common_phrases(role_1_messages),
+            'sentence_patterns': self._analyze_sentence_patterns(role_1_messages),
             'conversation_count': len(conversations),
         }
 
-        logger.info(f"Seed analysis complete")
+        logger.info(f"Seed analysis complete: domain={detected_domain}, roles={role_1}/{role_2}")
         return analysis
 
     def _analyze_message_stats(
         self,
         all_messages: List[Dict],
-        customer_messages: List[str],
-        agent_messages: List[str]
+        role_1_messages: List[str],
+        role_2_messages: List[str]
     ) -> Dict[str, Any]:
         """Analyze message length statistics."""
-        customer_lengths = [len(msg.split()) for msg in customer_messages if msg]
-        agent_lengths = [len(msg.split()) for msg in agent_messages if msg]
+        role_1_lengths = [len(msg.split()) for msg in role_1_messages if msg]
+        role_2_lengths = [len(msg.split()) for msg in role_2_messages if msg]
 
         return {
-            'avg_customer_length': round(statistics.mean(customer_lengths), 1) if customer_lengths else 0,
-            'avg_agent_length': round(statistics.mean(agent_lengths), 1) if agent_lengths else 0,
-            'customer_length_range': [
-                min(customer_lengths) if customer_lengths else 0,
-                max(customer_lengths) if customer_lengths else 0
+            'avg_role_1_length': round(statistics.mean(role_1_lengths), 1) if role_1_lengths else 0,
+            'avg_role_2_length': round(statistics.mean(role_2_lengths), 1) if role_2_lengths else 0,
+            'role_1_length_range': [
+                min(role_1_lengths) if role_1_lengths else 0,
+                max(role_1_lengths) if role_1_lengths else 0
             ],
             'total_messages': len(all_messages),
-            'customer_messages': len(customer_messages),
-            'agent_messages': len(agent_messages),
+            'role_1_messages': len(role_1_messages),
+            'role_2_messages': len(role_2_messages),
+            # Backwards compatibility aliases
+            'avg_customer_length': round(statistics.mean(role_1_lengths), 1) if role_1_lengths else 0,
+            'avg_agent_length': round(statistics.mean(role_2_lengths), 1) if role_2_lengths else 0,
+            'customer_length_range': [
+                min(role_1_lengths) if role_1_lengths else 0,
+                max(role_1_lengths) if role_1_lengths else 0
+            ],
+            'customer_messages': len(role_1_messages),
+            'agent_messages': len(role_2_messages),
         }
 
     def _analyze_vocabulary(self, messages: List[str]) -> Dict[str, Any]:
@@ -425,11 +537,21 @@ class SeedAnalyzer:
     def _get_default_analysis(self) -> Dict[str, Any]:
         """Return default analysis when no seeds provided."""
         return {
+            'domain': 'customer_support',
+            'domain_scores': {},
+            'role_1': 'customer',
+            'role_2': 'agent',
             'message_stats': {
+                'avg_role_1_length': 15,
+                'avg_role_2_length': 20,
+                'role_1_length_range': [5, 30],
+                'total_messages': 0,
+                'role_1_messages': 0,
+                'role_2_messages': 0,
+                # Backwards compatibility
                 'avg_customer_length': 15,
                 'avg_agent_length': 20,
                 'customer_length_range': [5, 30],
-                'total_messages': 0,
                 'customer_messages': 0,
                 'agent_messages': 0,
             },
