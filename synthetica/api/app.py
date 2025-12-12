@@ -16,8 +16,9 @@ from pydantic import BaseModel, Field
 from synthetica.generators.conversation import ConversationGenerator
 from synthetica.generators.product import ProductGenerator
 from synthetica.generators.diversity import DiversityEngine
+from synthetica.generators.domain_vocabulary import DomainVocabulary
 from synthetica.quality.scorer import QualityScorer
-from synthetica.schemas.conversation import ConversationConfig
+from synthetica.schemas.conversation import ConversationConfig, SUPPORTED_DOMAINS
 from synthetica.output.formatters import ConversationFormatter
 from synthetica.api.database import DatabaseManager, SubscriptionTier, TIER_PRICES, TIER_LIMITS
 from synthetica.analysis.seed_analyzer import SeedAnalyzer
@@ -63,14 +64,24 @@ class DiversityConfig(BaseModel):
 
 class GenerateRequest(BaseModel):
     """Request model for conversation generation."""
+    domain: str = Field(
+        default="customer_support",
+        description="Domain of conversation (customer_support, healthcare, sales, education, legal, recruiting, financial_services, real_estate)"
+    )
     industry: str = Field(..., description="Industry context")
     topics: List[str] = Field(..., min_length=1, description="List of conversation topics")
+    scenario: Optional[str] = Field(None, description="Specific scenario being discussed")
+    role_1: Optional[str] = Field(None, description="First role in conversation (auto-detected from domain if not provided)")
+    role_2: Optional[str] = Field(None, description="Second role in conversation (auto-detected from domain if not provided)")
     count: int = Field(default=1, ge=1, le=50, description="Number of conversations to generate")
-    customer_tone: str = Field(default="professional")
-    agent_style: str = Field(default="professional")
+    tone: str = Field(default="professional", description="Conversation tone (formal, casual, empathetic, professional)")
     message_count: int = Field(default=8, ge=4, le=20)
     diversity_config: Optional[DiversityConfig] = Field(None, description="Optional diversity engine configuration")
     use_seeds: bool = Field(default=False, description="Use uploaded seed conversations for style-based generation")
+
+    # Backwards compatibility for old API calls
+    customer_tone: Optional[str] = Field(None, description="Deprecated: use 'tone' instead")
+    agent_style: Optional[str] = Field(None, description="Deprecated: ignored, use 'tone' instead")
 
 
 class QualityMetrics(BaseModel):
@@ -84,8 +95,12 @@ class QualityMetrics(BaseModel):
 class ConversationResponse(BaseModel):
     """Response model for a single conversation."""
     id: str
+    domain: str
     industry: str
     topic: str
+    scenario: Optional[str]
+    role_1: str
+    role_2: str
     tone: str
     message_count: int
     quality_score: Optional[float]
@@ -507,6 +522,29 @@ async def generate_conversations(
                 logger.info(f"Loading {len(request.diversity_config.seed_examples)} seed examples")
                 diversity_engine.load_seed_examples(request.diversity_config.seed_examples)
 
+        # Validate domain
+        supported_domains = DomainVocabulary.get_supported_domains()
+        if request.domain not in supported_domains:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported domain '{request.domain}'. Supported domains: {', '.join(supported_domains)}"
+            )
+
+        # Auto-detect roles from domain if not provided
+        role_1 = request.role_1
+        role_2 = request.role_2
+        if not role_1 or not role_2:
+            default_role_1, default_role_2 = DomainVocabulary.get_default_roles(request.domain)
+            role_1 = role_1 or default_role_1
+            role_2 = role_2 or default_role_2
+            logger.info(f"Auto-detected roles for {request.domain}: {role_1}/{role_2}")
+
+        # Handle tone (backwards compatibility with customer_tone)
+        tone = request.tone
+        if request.customer_tone:
+            tone = request.customer_tone
+            logger.info(f"Using customer_tone (deprecated) for tone: {tone}")
+
         # Initialize generator and scorer
         generator = ConversationGenerator(
             api_key=anthropic_key,
@@ -514,11 +552,15 @@ async def generate_conversations(
         )
         scorer = QualityScorer(api_key=anthropic_key)
 
-        # Create config
+        # Create config with new domain parameters
         config = ConversationConfig(
+            domain=request.domain,
             industry=request.industry,
             topics=request.topics,
-            tone=request.customer_tone,
+            scenario=request.scenario,
+            role_1=role_1,
+            role_2=role_2,
+            tone=tone,
             message_count=request.message_count
         )
 
@@ -689,8 +731,12 @@ async def generate_conversations(
         conversation_responses = [
             ConversationResponse(
                 id=conv.id,
+                domain=conv.metadata.domain,
                 industry=conv.metadata.industry,
                 topic=conv.metadata.topic,
+                scenario=conv.metadata.scenario,
+                role_1=conv.metadata.role_1,
+                role_2=conv.metadata.role_2,
                 tone=conv.metadata.tone,
                 message_count=len(conv.messages),
                 quality_score=conv.quality_score,
