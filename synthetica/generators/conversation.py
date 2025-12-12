@@ -61,18 +61,36 @@ class ConversationGenerator:
             Exception: If generation fails
         """
         try:
-            logger.info(f"Generating conversation for industry: {config.industry}, topic: {config.topics}")
+            logger.info(f"Generating conversation for domain: {config.domain}, industry: {config.industry}, topic: {config.topics}")
 
-            # Get persona from diversity engine if available
-            persona = None
+            # Get personas for both roles from diversity engine if available
+            role1_persona = None
+            role2_persona = None
             if self.diversity_engine:
-                persona = self.diversity_engine.get_persona_for_conversation()
+                # Try to get domain-specific personas first
+                role1_persona = self.diversity_engine.persona_generator.get_persona_for_domain_role(
+                    config.domain, config.role_1
+                )
+                role2_persona = self.diversity_engine.persona_generator.get_persona_for_domain_role(
+                    config.domain, config.role_2
+                )
+
+                # Log persona selection
+                if role1_persona:
+                    logger.info(f"✓ Selected persona for {config.role_1}: {role1_persona.name} (ID: {role1_persona.id})")
+                else:
+                    logger.info(f"  No domain-specific persona for {config.role_1}, using default prompting")
+
+                if role2_persona:
+                    logger.info(f"✓ Selected persona for {config.role_2}: {role2_persona.name} (ID: {role2_persona.id})")
+                else:
+                    logger.info(f"  No domain-specific persona for {config.role_2}, using default prompting")
 
             # Select a random topic if multiple provided
             topic = random.choice(config.topics) if config.topics else "general inquiry"
 
-            # Build prompt for Claude
-            prompt = self._build_prompt(config, topic, persona)
+            # Build prompt for Claude with both personas
+            prompt = self._build_prompt(config, topic, role1_persona, role2_persona)
 
             # Call Claude API
             response = self.client.messages.create(
@@ -98,9 +116,14 @@ class ConversationGenerator:
                 message_count=len(messages),
             )
 
-            # Add persona to metadata if available
-            if persona:
-                metadata.persona = persona.to_dict()
+            # Add personas to metadata if available
+            personas_metadata = {}
+            if role1_persona:
+                personas_metadata['role_1_persona'] = role1_persona.to_dict()
+            if role2_persona:
+                personas_metadata['role_2_persona'] = role2_persona.to_dict()
+            if personas_metadata:
+                metadata.persona = personas_metadata
 
             conversation = Conversation(
                 id=str(uuid.uuid4()),
@@ -143,7 +166,8 @@ class ConversationGenerator:
         self,
         config: ConversationConfig,
         topic: str,
-        persona: Optional[Persona] = None
+        role1_persona: Optional[Persona] = None,
+        role2_persona: Optional[Persona] = None
     ) -> str:
         """Build the prompt for Claude to generate a domain-agnostic conversation."""
         # Get domain context
@@ -184,22 +208,43 @@ Requirements:
 - {config.role_2.capitalize()} should be {DomainVocabulary.get_tone_guidance(config.domain).split(',')[0].lower()}
 """
 
-        # Add persona-specific guidance if available
-        if persona:
+        # Add role 1 persona-specific guidance if available
+        if role1_persona:
             prompt += f"""
-{config.role_1.capitalize()} Persona Characteristics:
-- Age range: {persona.age_range}
-- Communication style: {persona.communication_style}
-- Tech savviness: {persona.tech_savviness}
-- Patience level: {persona.patience_level}
-- Vocabulary level: {persona.vocabulary_level}
-- The {config.role_1} should exhibit these traits naturally through their messages
+CRITICAL: {config.role_1.upper()} PERSONALITY TRAITS (must be clearly visible in their messages):
+- Persona: {role1_persona.name}
+- Age range: {role1_persona.age_range}
+- Tone: {role1_persona.tone} (THIS IS CRITICAL - make it very obvious!)
+- Communication style: {role1_persona.communication_style}
+- Patience level: {role1_persona.patience_level}
+- Vocabulary level: {role1_persona.vocabulary_level}
+- The {config.role_1} MUST embody a {role1_persona.tone} tone throughout the entire conversation
+- The {config.role_1}'s personality should be IMMEDIATELY APPARENT from their first message
 """
-            if persona.typical_phrases:
-                prompt += f"- May use phrases like: {', '.join(persona.typical_phrases[:2])}\n"
+            if role1_persona.typical_phrases:
+                prompt += f"- Should naturally incorporate phrases like: {', '.join(role1_persona.typical_phrases)}\n"
 
-            if persona.emoji_usage != "none":
-                prompt += f"- Emoji usage: {persona.emoji_usage}\n"
+            if role1_persona.emoji_usage != "none":
+                prompt += f"- Emoji usage: {role1_persona.emoji_usage}\n"
+
+        # Add role 2 persona-specific guidance if available
+        if role2_persona:
+            prompt += f"""
+CRITICAL: {config.role_2.upper()} PERSONALITY TRAITS (must be clearly visible in their messages):
+- Persona: {role2_persona.name}
+- Age range: {role2_persona.age_range}
+- Tone: {role2_persona.tone} (THIS IS CRITICAL - make it very obvious!)
+- Communication style: {role2_persona.communication_style}
+- Patience level: {role2_persona.patience_level}
+- Vocabulary level: {role2_persona.vocabulary_level}
+- The {config.role_2} MUST embody a {role2_persona.tone} tone throughout the entire conversation
+- The {config.role_2}'s personality should be IMMEDIATELY APPARENT from their first message
+"""
+            if role2_persona.typical_phrases:
+                prompt += f"- Should naturally incorporate phrases like: {', '.join(role2_persona.typical_phrases)}\n"
+
+            if role2_persona.emoji_usage != "none":
+                prompt += f"- Emoji usage: {role2_persona.emoji_usage}\n"
 
         # Add style guidance from diversity engine if available
         if self.diversity_engine and self.diversity_engine.style_pattern:

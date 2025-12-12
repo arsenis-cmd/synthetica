@@ -40,11 +40,12 @@ class Persona:
 
 
 class PersonaGenerator:
-    """Generates and manages diverse customer personas."""
+    """Generates and manages diverse personas for any role/domain."""
 
     def __init__(self):
         """Initialize with predefined personas."""
         self.personas = self._create_default_personas()
+        self.domain_personas = self._create_domain_personas()
 
     def _create_default_personas(self) -> List[Persona]:
         """Create 12 distinct customer personas."""
@@ -256,15 +257,259 @@ class PersonaGenerator:
             )
         ]
 
+    def _create_domain_personas(self) -> Dict[str, Dict[str, List[Persona]]]:
+        """Create domain-specific personas for different roles."""
+        return {
+            "healthcare": {
+                "patient": [
+                    Persona(
+                        id="nervous_patient",
+                        name="Nervous Patient",
+                        age_range="25-55",
+                        tone="anxious",
+                        vocabulary_level="basic",
+                        patience_level="low",
+                        tech_savviness="beginner",
+                        communication_style="worried and over-explaining",
+                        typical_phrases=[
+                            "I'm really concerned about this",
+                            "Is this something serious?",
+                            "I've been worrying about this for days",
+                            "Should I be alarmed?"
+                        ],
+                        emoji_usage="none"
+                    ),
+                    Persona(
+                        id="stoic_patient",
+                        name="Stoic Patient",
+                        age_range="40-65",
+                        tone="matter-of-fact",
+                        vocabulary_level="intermediate",
+                        patience_level="high",
+                        tech_savviness="intermediate",
+                        communication_style="brief and factual",
+                        typical_phrases=[
+                            "Just the facts, please",
+                            "I can handle it",
+                            "What do I need to do?",
+                            "No need to sugarcoat"
+                        ],
+                        emoji_usage="none"
+                    ),
+                    Persona(
+                        id="detail_oriented_patient",
+                        name="Detail-Oriented Patient",
+                        age_range="30-50",
+                        tone="analytical",
+                        vocabulary_level="advanced",
+                        patience_level="high",
+                        tech_savviness="expert",
+                        communication_style="thorough and questioning",
+                        typical_phrases=[
+                            "Can you explain the mechanism?",
+                            "What are all the possible side effects?",
+                            "I've been tracking my symptoms",
+                            "I'd like to understand the options"
+                        ],
+                        emoji_usage="none"
+                    )
+                ],
+                "doctor": [
+                    Persona(
+                        id="rushed_doctor",
+                        name="Rushed Doctor",
+                        age_range="35-50",
+                        tone="hurried",
+                        vocabulary_level="advanced",
+                        patience_level="low",
+                        tech_savviness="intermediate",
+                        communication_style="efficient and directive",
+                        typical_phrases=[
+                            "Let's move quickly through this",
+                            "In brief",
+                            "I need to see another patient shortly",
+                            "The key point is"
+                        ],
+                        emoji_usage="none"
+                    ),
+                    Persona(
+                        id="empathetic_doctor",
+                        name="Empathetic Doctor",
+                        age_range="30-55",
+                        tone="compassionate",
+                        vocabulary_level="intermediate",
+                        patience_level="high",
+                        tech_savviness="intermediate",
+                        communication_style="warm and reassuring",
+                        typical_phrases=[
+                            "I understand your concerns",
+                            "Let's work through this together",
+                            "It's completely normal to feel this way",
+                            "I'm here to help you"
+                        ],
+                        emoji_usage="none"
+                    ),
+                    Persona(
+                        id="clinical_doctor",
+                        name="Clinical Doctor",
+                        age_range="40-60",
+                        tone="professional",
+                        vocabulary_level="advanced",
+                        patience_level="medium",
+                        tech_savviness="expert",
+                        communication_style="precise and medical",
+                        typical_phrases=[
+                            "Clinically speaking",
+                            "The diagnosis indicates",
+                            "Based on the symptoms",
+                            "We should run some tests"
+                        ],
+                        emoji_usage="none"
+                    )
+                ]
+            },
+            "sales": {
+                "prospect": [
+                    Persona(
+                        id="skeptical_prospect",
+                        name="Skeptical Prospect",
+                        age_range="35-50",
+                        tone="doubtful",
+                        vocabulary_level="advanced",
+                        patience_level="low",
+                        tech_savviness="expert",
+                        communication_style="challenging and questioning",
+                        typical_phrases=[
+                            "I've heard that before",
+                            "How is this different from competitors?",
+                            "Can you prove that claim?",
+                            "I'm not convinced yet"
+                        ],
+                        emoji_usage="none"
+                    ),
+                    Persona(
+                        id="eager_prospect",
+                        name="Eager Prospect",
+                        age_range="25-40",
+                        tone="enthusiastic",
+                        vocabulary_level="intermediate",
+                        patience_level="medium",
+                        tech_savviness="intermediate",
+                        communication_style="excited and fast-paced",
+                        typical_phrases=[
+                            "This sounds perfect!",
+                            "When can we get started?",
+                            "I love this feature",
+                            "Our team needs this"
+                        ],
+                        emoji_usage="minimal"
+                    )
+                ],
+                "sales_rep": [
+                    Persona(
+                        id="consultative_rep",
+                        name="Consultative Rep",
+                        age_range="30-45",
+                        tone="advisory",
+                        vocabulary_level="advanced",
+                        patience_level="high",
+                        tech_savviness="expert",
+                        communication_style="solution-focused and patient",
+                        typical_phrases=[
+                            "Let me understand your needs first",
+                            "Based on what you've shared",
+                            "I'd recommend",
+                            "Let's explore your options"
+                        ],
+                        emoji_usage="none"
+                    ),
+                    Persona(
+                        id="pushy_rep",
+                        name="Pushy Rep",
+                        age_range="25-40",
+                        tone="aggressive",
+                        vocabulary_level="intermediate",
+                        patience_level="low",
+                        tech_savviness="intermediate",
+                        communication_style="direct and persistent",
+                        typical_phrases=[
+                            "This deal won't last",
+                            "I can offer you a discount today",
+                            "Let's close this now",
+                            "You don't want to miss this"
+                        ],
+                        emoji_usage="none"
+                    )
+                ]
+            },
+            "legal": {
+                "client": [
+                    Persona(
+                        id="worried_client",
+                        name="Worried Client",
+                        age_range="30-60",
+                        tone="concerned",
+                        vocabulary_level="intermediate",
+                        patience_level="medium",
+                        tech_savviness="beginner",
+                        communication_style="anxious and seeking reassurance",
+                        typical_phrases=[
+                            "What are my risks here?",
+                            "Could this go badly?",
+                            "I want to protect myself",
+                            "What's the worst case scenario?"
+                        ],
+                        emoji_usage="none"
+                    )
+                ],
+                "lawyer": [
+                    Persona(
+                        id="meticulous_lawyer",
+                        name="Meticulous Lawyer",
+                        age_range="35-55",
+                        tone="precise",
+                        vocabulary_level="advanced",
+                        patience_level="high",
+                        tech_savviness="intermediate",
+                        communication_style="detailed and thorough",
+                        typical_phrases=[
+                            "We need to review every clause",
+                            "Legally speaking",
+                            "The precedent here",
+                            "I'll need to examine this carefully"
+                        ],
+                        emoji_usage="none"
+                    )
+                ]
+            }
+        }
+
     def get_random_persona(self) -> Persona:
         """Get a random persona from the pool."""
         return random.choice(self.personas)
 
     def get_persona_by_id(self, persona_id: str) -> Optional[Persona]:
         """Get a specific persona by ID."""
+        # Check default personas first
         for persona in self.personas:
             if persona.id == persona_id:
                 return persona
+
+        # Check domain personas
+        for domain_roles in self.domain_personas.values():
+            for role_personas in domain_roles.values():
+                for persona in role_personas:
+                    if persona.id == persona_id:
+                        return persona
+        return None
+
+    def get_persona_for_domain_role(self, domain: str, role: str) -> Optional[Persona]:
+        """Get a random persona for a specific domain and role."""
+        if domain in self.domain_personas:
+            if role in self.domain_personas[domain]:
+                personas = self.domain_personas[domain][role]
+                if personas:
+                    return random.choice(personas)
         return None
 
 
