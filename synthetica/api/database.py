@@ -98,6 +98,40 @@ class DatabaseManager:
                     )
                 """)
 
+                # Seed conversations table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS seed_conversations (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL,
+                        conversation_data JSONB NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )
+                """)
+
+                # Seed analysis table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS seed_analysis (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL,
+                        analysis_data JSONB NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )
+                """)
+
+                # Seed personas table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS seed_personas (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL,
+                        persona_data JSONB NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )
+                """)
+
                 conn.commit()
                 logger.info("PostgreSQL database initialized successfully")
         else:
@@ -131,6 +165,40 @@ class DatabaseManager:
                         status TEXT NOT NULL DEFAULT 'pending',
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         completed_at TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )
+                """)
+
+                # Seed conversations table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS seed_conversations (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        conversation_data TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )
+                """)
+
+                # Seed analysis table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS seed_analysis (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        analysis_data TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    )
+                """)
+
+                # Seed personas table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS seed_personas (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        persona_data TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (user_id) REFERENCES users (id)
                     )
                 """)
@@ -442,3 +510,296 @@ class DatabaseManager:
             "percentage_used": round((usage / limit * 100) if limit > 0 else 0, 1),
             "created_at": user['created_at']
         }
+
+    # Seed-based generation methods
+
+    def store_seed_conversations(self, api_key: str, conversations: list) -> bool:
+        """
+        Store seed conversations for a user.
+
+        Args:
+            api_key: User's API key
+            conversations: List of conversation dictionaries
+
+        Returns:
+            True if successful
+        """
+        import json
+
+        user = self.get_user_by_api_key(api_key)
+        if not user:
+            return False
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+
+            for conv in conversations:
+                if self.use_postgres:
+                    cursor.execute(
+                        """
+                        INSERT INTO seed_conversations (user_id, conversation_data)
+                        VALUES (%s, %s)
+                        """,
+                        (user['id'], json.dumps(conv))
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        INSERT INTO seed_conversations (user_id, conversation_data)
+                        VALUES (?, ?)
+                        """,
+                        (user['id'], json.dumps(conv))
+                    )
+
+            conn.commit()
+            logger.info(f"Stored {len(conversations)} seed conversations for user")
+            return True
+
+    def get_seed_conversations(self, api_key: str) -> list:
+        """
+        Get all seed conversations for a user.
+
+        Args:
+            api_key: User's API key
+
+        Returns:
+            List of conversation dictionaries
+        """
+        import json
+
+        user = self.get_user_by_api_key(api_key)
+        if not user:
+            return []
+
+        with self.get_connection() as conn:
+            if self.use_postgres:
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+            else:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT conversation_data FROM seed_conversations
+                WHERE user_id = %s
+                """ if self.use_postgres else """
+                SELECT conversation_data FROM seed_conversations
+                WHERE user_id = ?
+                """,
+                (user['id'],)
+            )
+
+            rows = cursor.fetchall()
+            return [json.loads(row['conversation_data'] if self.use_postgres else row[0]) for row in rows]
+
+    def store_seed_analysis(self, api_key: str, analysis_data: dict) -> bool:
+        """
+        Store or update seed analysis for a user.
+
+        Args:
+            api_key: User's API key
+            analysis_data: Analysis results dictionary
+
+        Returns:
+            True if successful
+        """
+        import json
+
+        user = self.get_user_by_api_key(api_key)
+        if not user:
+            return False
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Check if analysis exists
+            cursor.execute(
+                """
+                SELECT id FROM seed_analysis
+                WHERE user_id = %s
+                """ if self.use_postgres else """
+                SELECT id FROM seed_analysis
+                WHERE user_id = ?
+                """,
+                (user['id'],)
+            )
+
+            existing = cursor.fetchone()
+
+            if existing:
+                # Update existing analysis
+                cursor.execute(
+                    """
+                    UPDATE seed_analysis
+                    SET analysis_data = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE user_id = %s
+                    """ if self.use_postgres else """
+                    UPDATE seed_analysis
+                    SET analysis_data = ?,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE user_id = ?
+                    """,
+                    (json.dumps(analysis_data), user['id'])
+                )
+            else:
+                # Insert new analysis
+                cursor.execute(
+                    """
+                    INSERT INTO seed_analysis (user_id, analysis_data)
+                    VALUES (%s, %s)
+                    """ if self.use_postgres else """
+                    INSERT INTO seed_analysis (user_id, analysis_data)
+                    VALUES (?, ?)
+                    """,
+                    (user['id'], json.dumps(analysis_data))
+                )
+
+            conn.commit()
+            logger.info(f"Stored seed analysis for user")
+            return True
+
+    def get_seed_analysis(self, api_key: str) -> Optional[dict]:
+        """
+        Get seed analysis for a user.
+
+        Args:
+            api_key: User's API key
+
+        Returns:
+            Analysis dictionary or None
+        """
+        import json
+
+        user = self.get_user_by_api_key(api_key)
+        if not user:
+            return None
+
+        with self.get_connection() as conn:
+            if self.use_postgres:
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+            else:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT analysis_data FROM seed_analysis
+                WHERE user_id = %s
+                """ if self.use_postgres else """
+                SELECT analysis_data FROM seed_analysis
+                WHERE user_id = ?
+                """,
+                (user['id'],)
+            )
+
+            row = cursor.fetchone()
+            if row:
+                return json.loads(row['analysis_data'] if self.use_postgres else row[0])
+            return None
+
+    def store_seed_persona(self, api_key: str, persona_data: dict) -> bool:
+        """
+        Store a seed-generated persona for a user.
+
+        Args:
+            api_key: User's API key
+            persona_data: Persona dictionary
+
+        Returns:
+            True if successful
+        """
+        import json
+
+        user = self.get_user_by_api_key(api_key)
+        if not user:
+            return False
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                INSERT INTO seed_personas (user_id, persona_data)
+                VALUES (%s, %s)
+                """ if self.use_postgres else """
+                INSERT INTO seed_personas (user_id, persona_data)
+                VALUES (?, ?)
+                """,
+                (user['id'], json.dumps(persona_data))
+            )
+
+            conn.commit()
+            logger.info(f"Stored seed persona for user")
+            return True
+
+    def get_seed_personas(self, api_key: str) -> list:
+        """
+        Get all seed-generated personas for a user.
+
+        Args:
+            api_key: User's API key
+
+        Returns:
+            List of persona dictionaries
+        """
+        import json
+
+        user = self.get_user_by_api_key(api_key)
+        if not user:
+            return []
+
+        with self.get_connection() as conn:
+            if self.use_postgres:
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+            else:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT persona_data FROM seed_personas
+                WHERE user_id = %s
+                """ if self.use_postgres else """
+                SELECT persona_data FROM seed_personas
+                WHERE user_id = ?
+                """,
+                (user['id'],)
+            )
+
+            rows = cursor.fetchall()
+            return [json.loads(row['persona_data'] if self.use_postgres else row[0]) for row in rows]
+
+    def clear_seed_data(self, api_key: str) -> bool:
+        """
+        Clear all seed-related data for a user.
+
+        Args:
+            api_key: User's API key
+
+        Returns:
+            True if successful
+        """
+        user = self.get_user_by_api_key(api_key)
+        if not user:
+            return False
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Delete in order (respecting foreign keys)
+            for table in ['seed_personas', 'seed_analysis', 'seed_conversations']:
+                cursor.execute(
+                    f"""
+                    DELETE FROM {table}
+                    WHERE user_id = %s
+                    """ if self.use_postgres else f"""
+                    DELETE FROM {table}
+                    WHERE user_id = ?
+                    """,
+                    (user['id'],)
+                )
+
+            conn.commit()
+            logger.info(f"Cleared all seed data for user")
+            return True

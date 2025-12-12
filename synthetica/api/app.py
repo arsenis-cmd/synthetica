@@ -20,6 +20,7 @@ from synthetica.quality.scorer import QualityScorer
 from synthetica.schemas.conversation import ConversationConfig
 from synthetica.output.formatters import ConversationFormatter
 from synthetica.api.database import DatabaseManager, SubscriptionTier, TIER_PRICES, TIER_LIMITS
+from synthetica.analysis.seed_analyzer import SeedAnalyzer
 
 # Configure logging
 logging.basicConfig(
@@ -69,6 +70,7 @@ class GenerateRequest(BaseModel):
     agent_style: str = Field(default="professional")
     message_count: int = Field(default=8, ge=4, le=20)
     diversity_config: Optional[DiversityConfig] = Field(None, description="Optional diversity engine configuration")
+    use_seeds: bool = Field(default=False, description="Use uploaded seed conversations for style-based generation")
 
 
 class QualityMetrics(BaseModel):
@@ -184,6 +186,35 @@ class GenerateProductResponse(BaseModel):
     products: List[ProductResponse]
     output_file: Optional[str]
     usage_info: dict
+
+
+class UploadSeedsRequest(BaseModel):
+    """Request model for uploading seed conversations."""
+    conversations: List[dict] = Field(
+        ...,
+        min_length=10,
+        max_length=50,
+        description="List of 10-50 seed conversations with messages"
+    )
+    generate_personas: bool = Field(
+        default=True,
+        description="Automatically generate personas from seeds"
+    )
+    persona_count: int = Field(
+        default=5,
+        ge=3,
+        le=10,
+        description="Number of personas to generate (3-10)"
+    )
+
+
+class UploadSeedsResponse(BaseModel):
+    """Response model for seed upload endpoint."""
+    success: bool
+    seed_count: int
+    analysis: dict
+    personas: Optional[List[dict]] = None
+    message: str
 
 
 # Helper functions
@@ -302,6 +333,93 @@ async def get_usage(x_api_key: str = Header(..., alias="X-API-Key")):
     )
 
 
+@app.post("/api/upload-seeds", response_model=UploadSeedsResponse)
+async def upload_seed_conversations(
+    request: UploadSeedsRequest,
+    x_api_key: str = Header(..., alias="X-API-Key")
+):
+    """
+    Upload seed conversations for style-based generation.
+
+    Accepts 10-50 example conversations, analyzes their style patterns,
+    and optionally generates personas that match the detected style.
+
+    Headers:
+        X-API-Key: Your Synthetica API key
+
+    The seed conversations will be used when generating with use_seeds=true.
+    """
+    try:
+        # Validate API key
+        user = db.get_user_by_api_key(x_api_key)
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+
+        logger.info(f"Uploading {len(request.conversations)} seed conversations")
+
+        # Validate conversations structure
+        for i, conv in enumerate(request.conversations):
+            if 'messages' not in conv:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Conversation {i} missing 'messages' field"
+                )
+
+            messages = conv['messages']
+            if not isinstance(messages, list) or len(messages) < 2:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Conversation {i} must have at least 2 messages"
+                )
+
+            # Check message structure
+            for j, msg in enumerate(messages):
+                if 'role' not in msg or 'content' not in msg:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Message {j} in conversation {i} missing 'role' or 'content'"
+                    )
+
+        # Store seed conversations
+        success = db.store_seed_conversations(x_api_key, request.conversations)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to store seed conversations")
+
+        # Analyze seeds
+        analyzer = SeedAnalyzer()
+        analysis = analyzer.analyze_seeds(request.conversations)
+
+        # Store analysis
+        db.store_seed_analysis(x_api_key, analysis)
+
+        # Generate personas if requested
+        personas = None
+        if request.generate_personas:
+            logger.info(f"Generating {request.persona_count} personas from seed analysis")
+            personas = analyzer.generate_personas_from_analysis(
+                analysis,
+                count=request.persona_count
+            )
+
+            # Store personas
+            for persona in personas:
+                db.store_seed_persona(x_api_key, persona)
+
+        return UploadSeedsResponse(
+            success=True,
+            seed_count=len(request.conversations),
+            analysis=analysis,
+            personas=personas,
+            message=f"Successfully uploaded {len(request.conversations)} seeds and generated {len(personas) if personas else 0} personas"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading seeds: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/generate", response_model=GenerateResponse)
 async def generate_conversations(
     request: GenerateRequest,
@@ -351,6 +469,30 @@ async def generate_conversations(
         # Get Anthropic API key
         anthropic_key = get_anthropic_api_key()
 
+        # Handle seed-based generation
+        seed_personas = None
+        seed_analysis = None
+        if request.use_seeds:
+            logger.info("Using seed-based generation")
+
+            # Get seed analysis
+            seed_analysis = db.get_seed_analysis(x_api_key)
+            if not seed_analysis:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No seed conversations found. Upload seeds first using /api/upload-seeds"
+                )
+
+            # Get seed personas
+            seed_personas = db.get_seed_personas(x_api_key)
+            if not seed_personas:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No seed personas found. Upload seeds with generate_personas=true"
+                )
+
+            logger.info(f"Found {len(seed_personas)} seed personas to use")
+
         # Initialize diversity engine if configured
         diversity_engine = None
         if request.diversity_config and request.diversity_config.enabled:
@@ -388,7 +530,34 @@ async def generate_conversations(
         for i in range(request.count):
             try:
                 logger.info(f"Generating conversation {i+1}/{request.count}")
-                conv = generator.generate(config)
+
+                # Use seed persona if available
+                current_persona = None
+                if seed_personas:
+                    # Rotate through personas
+                    persona_dict = seed_personas[i % len(seed_personas)]
+                    # Convert dict to Persona-like object
+                    from synthetica.generators.diversity import Persona
+                    current_persona = Persona(**persona_dict)
+                    logger.info(f"Using seed persona: {persona_dict.get('id', 'unknown')}")
+
+                # Generate with or without persona
+                if current_persona and not diversity_engine:
+                    # Create temporary diversity engine just for persona
+                    temp_diversity_engine = DiversityEngine()
+                    temp_diversity_engine.personas = [current_persona]
+                    temp_generator = ConversationGenerator(
+                        api_key=anthropic_key,
+                        diversity_engine=temp_diversity_engine
+                    )
+                    conv = temp_generator.generate(config)
+                else:
+                    conv = generator.generate(config)
+
+                # Add persona_id to metadata if using seeds
+                if seed_personas and conv.metadata:
+                    persona_dict = seed_personas[i % len(seed_personas)]
+                    conv.metadata.persona = persona_dict
 
                 # Check anti-repetition if diversity engine is enabled
                 if diversity_engine:
@@ -452,26 +621,51 @@ async def generate_conversations(
             name=base_name
         )
 
-        # Calculate diversity metrics if diversity engine was used
+        # Calculate diversity metrics if diversity engine or seed-based generation was used
         diversity_metrics = None
-        if diversity_engine and conversation_texts:
+        if (diversity_engine or request.use_seeds) and len(conversations) > 1:
             logger.info("Calculating diversity metrics for batch")
+
+            # Collect conversation texts if not already done
+            if not conversation_texts:
+                conversation_texts = [" ".join(m.content for m in conv.messages) for conv in conversations]
 
             # Convert conversations to format needed for diversity scoring
             conversation_objects = [
                 {
                     "id": conv.id,
                     "metadata": {
-                        "persona": conv.metadata.persona
+                        "persona": conv.metadata.persona if hasattr(conv.metadata, 'persona') else None
                     }
                 }
                 for conv in conversations
             ]
 
-            diversity_scores = diversity_engine.calculate_batch_diversity(
+            # Use existing diversity engine or create one for scoring
+            scoring_engine = diversity_engine if diversity_engine else DiversityEngine(
+                similarity_threshold=0.8  # Flag if similarity > 80%
+            )
+
+            diversity_scores = scoring_engine.calculate_batch_diversity(
                 conversation_texts,
                 conversation_objects
             )
+
+            # Flag conversations that are too similar
+            high_similarity_pairs = []
+            for i, conv_text_1 in enumerate(conversation_texts):
+                for j, conv_text_2 in enumerate(conversation_texts[i+1:], i+1):
+                    similarity = scoring_engine.calculate_text_similarity(conv_text_1, conv_text_2)
+                    if similarity > 0.8:
+                        high_similarity_pairs.append({
+                            "conversation_1": conversations[i].id,
+                            "conversation_2": conversations[j].id,
+                            "similarity": round(similarity, 3)
+                        })
+
+            # Add similarity warnings to diversity scores
+            diversity_scores["high_similarity_pairs"] = high_similarity_pairs
+            diversity_scores["has_high_similarity"] = len(high_similarity_pairs) > 0
 
             diversity_metrics = DiversityMetrics(
                 overall=diversity_scores["overall"],

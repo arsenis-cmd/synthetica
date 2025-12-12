@@ -49,7 +49,7 @@ synthetica.db
 .env.*.local
 
 # Output
-output/
+/output/
 *.log
 
 # Testing
