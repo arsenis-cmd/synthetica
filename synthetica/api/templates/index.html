@@ -684,7 +684,7 @@
     <div class="container">
         <div class="page-header">
             <h1>Generate Conversations</h1>
-            <p>Create realistic, synthetic customer support conversations for training AI models</p>
+            <p>Create realistic, domain-agnostic conversations for any industry or use case</p>
         </div>
 
         <div class="main-layout">
@@ -696,6 +696,39 @@
                         <label for="apiKey">API Key <a href="/pricing">(Get free key)</a></label>
                         <input type="text" id="apiKey" placeholder="sk-synth-..." required>
                         <p class="input-hint">Saved locally in your browser</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="domain">Domain</label>
+                        <select id="domain" required>
+                            <option value="customer_support">Customer Support</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="sales">Sales</option>
+                            <option value="education">Education</option>
+                            <option value="legal">Legal</option>
+                            <option value="recruiting">Recruiting</option>
+                            <option value="financial_services">Financial Services</option>
+                            <option value="real_estate">Real Estate</option>
+                        </select>
+                        <p class="input-hint">Type of conversation to generate</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="role1">First Role (e.g., customer, patient, student)</label>
+                        <input type="text" id="role1" placeholder="Auto-detected from domain">
+                        <p class="input-hint">Leave empty to use domain defaults</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="role2">Second Role (e.g., agent, doctor, teacher)</label>
+                        <input type="text" id="role2" placeholder="Auto-detected from domain">
+                        <p class="input-hint">Leave empty to use domain defaults</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="scenario">Scenario (optional)</label>
+                        <input type="text" id="scenario" placeholder="E.g., password reset request, diagnosis discussion">
+                        <p class="input-hint">Specific situation for the conversation</p>
                     </div>
 
                     <div class="form-group">
@@ -832,6 +865,44 @@
     </div>
 
     <script>
+        // Domain role defaults
+        const domainRoles = {
+            customer_support: ['customer', 'agent'],
+            healthcare: ['patient', 'doctor'],
+            sales: ['prospect', 'sales_rep'],
+            education: ['student', 'teacher'],
+            legal: ['client', 'lawyer'],
+            recruiting: ['candidate', 'recruiter'],
+            financial_services: ['client', 'advisor'],
+            real_estate: ['client', 'agent']
+        };
+
+        // Domain scenario examples
+        const domainScenarios = {
+            customer_support: ['order status inquiry', 'password reset', 'billing question', 'technical support'],
+            healthcare: ['symptom discussion', 'prescription refill', 'test results review', 'appointment scheduling'],
+            sales: ['product demo request', 'pricing inquiry', 'contract negotiation', 'feature comparison'],
+            education: ['homework help', 'grade discussion', 'assignment extension', 'concept clarification'],
+            legal: ['case consultation', 'contract review', 'legal advice', 'document preparation'],
+            recruiting: ['phone screen', 'technical interview', 'salary negotiation', 'offer discussion'],
+            financial_services: ['investment consultation', 'account inquiry', 'loan application', 'retirement planning'],
+            real_estate: ['property showing', 'offer negotiation', 'inspection discussion', 'lease agreement']
+        };
+
+        // Update role placeholders when domain changes
+        document.getElementById('domain').addEventListener('change', function() {
+            const domain = this.value;
+            const roles = domainRoles[domain] || ['role_1', 'role_2'];
+            const scenarios = domainScenarios[domain] || [];
+
+            document.getElementById('role1').placeholder = `Default: ${roles[0]}`;
+            document.getElementById('role2').placeholder = `Default: ${roles[1]}`;
+
+            if (scenarios.length > 0) {
+                document.getElementById('scenario').placeholder = `E.g., ${scenarios.slice(0, 2).join(', ')}`;
+            }
+        });
+
         // Topic mappings by industry
         const industryTopics = {
             technology: ['software bug', 'account access', 'feature request', 'installation help', 'performance issue'],
@@ -922,12 +993,19 @@
                 return;
             }
 
+            const role1 = document.getElementById('role1').value.trim();
+            const role2 = document.getElementById('role2').value.trim();
+            const scenario = document.getElementById('scenario').value.trim();
+
             const data = {
+                domain: document.getElementById('domain').value,
                 industry: document.getElementById('industry').value,
                 topics: selectedTopics,
+                scenario: scenario || null,
+                role_1: role1 || null,
+                role_2: role2 || null,
                 count: parseInt(document.getElementById('count').value),
-                customer_tone: document.getElementById('customerTone').value,
-                agent_style: document.getElementById('agentStyle').value,
+                tone: document.getElementById('customerTone').value,
                 message_count: parseInt(document.getElementById('messageCount').value)
             };
 
@@ -1089,6 +1167,9 @@
                     <div class="conversation">
                         <div class="conversation-header">
                             <div class="conversation-meta">
+                                <span class="meta-item"><strong>Domain:</strong> ${conv.domain.replace('_', ' ')}</span>
+                                <span class="meta-item"><strong>Roles:</strong> ${conv.role_1} / ${conv.role_2}</span>
+                                ${conv.scenario ? `<span class="meta-item"><strong>Scenario:</strong> ${conv.scenario}</span>` : ''}
                                 <span class="meta-item"><strong>Industry:</strong> ${conv.industry}</span>
                                 <span class="meta-item"><strong>Topic:</strong> ${conv.topic}</span>
                                 <span class="meta-item"><strong>Tone:</strong> ${conv.tone}</span>
